@@ -5,38 +5,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 import uuid
 
-st.set_page_config(
-    page_title="Zubair Hall Mess Dues System",
-    page_icon="🏠",
-    layout="wide"
-)
-
-# Fancy Background + Style
-st.markdown("""
-    <style>
-    .stApp {
-        background: linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.75)), 
-                    url('https://source.unsplash.com/1600x900/?hostel,building');
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-    }
-    .main .block-container {
-        background-color: rgba(255, 255, 255, 0.95);
-        border-radius: 15px;
-        padding: 2rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-    h1 { color: white; text-shadow: 3px 3px 10px rgba(0,0,0,0.8); }
-    .stButton>button {
-        background: linear-gradient(45deg, #ff4757, #ff6b81);
-        color: white;
-        border-radius: 12px;
-        height: 3.2em;
-        font-weight: bold;
-    }
-    </style>
-""", unsafe_allow_html=True)
+st.set_page_config(page_title="Zubair Hall Mess Dues System", layout="wide")
 
 def get_google_sheet():
     creds_dict = st.secrets["gspread"]
@@ -51,8 +20,12 @@ def load_dues():
     gc = get_google_sheet()
     try:
         sheet = gc.open("Hostel Dues Data").worksheet("Dues")
-        data = sheet.get_all_records()
-        return pd.DataFrame(data)
+        df = pd.DataFrame(sheet.get_all_records())
+        numeric_cols = ["Food_Dues", "Service_Charges", "Previous", "Total"]
+        for col in numeric_cols:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        return df
     except:
         return pd.DataFrame(columns=["Month", "RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous", "Total"])
 
@@ -66,8 +39,8 @@ def load_payments():
     gc = get_google_sheet()
     try:
         sheet = gc.open("Hostel Dues Data").worksheet("Payments")
-        data = sheet.get_all_records()
-        return pd.DataFrame(data)
+        df = pd.DataFrame(sheet.get_all_records())
+        return df
     except:
         return pd.DataFrame(columns=["Month", "RoomNo", "Name", "Phone", "Submission_Date", "Receipt_File"])
 
@@ -78,93 +51,69 @@ def save_payments(df):
     sheet.update([df.columns.values.tolist()] + df.values.tolist())
 
 # ====================== MAIN APP ======================
-st.title("🏠 Zubair Hall Mess Dues System")
+st.title("Zubair Hall Mess Dues System")
 st.caption("**Made by Abdul Hadi 2025 (S) CYS 90**")
 
-role = st.sidebar.selectbox("👤 Select Role", ["Student", "Admin"])
+role = st.sidebar.selectbox("Select Role", ["Student", "Admin"])
 
 if role == "Admin":
-    password = st.sidebar.text_input("🔑 Admin Password", type="password")
+    password = st.sidebar.text_input("Admin Password", type="password")
     if password != "hostel123":
-        st.sidebar.warning("❌ Wrong Password")
+        st.sidebar.warning("Wrong Password")
         st.stop()
 
 if role == "Admin":
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📤 Upload New Month", "📊 Monthly Dashboard", "⏳ All Pending Dues", "📋 Submissions", "🗑️ Clear Month"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📤 Upload New Month", "📊 Monthly Dashboard", "⏳ All Pending Dues", "📋 Submissions"])
 
     with tab1:
-        st.header("📤 Upload New Month Dues")
+        st.header("Upload New Month Dues")
+        month = st.text_input("Month (YYYY-MM)", value=datetime.now().strftime("%Y-%m"))
+        uploaded = st.file_uploader("Excel ya CSV file", type=["csv", "xlsx"])
         
-        col1, col2 = st.columns(2)
-        with col1:
-            year = st.selectbox("📅 Year", options=list(range(2025, 2031)), index=1)
-        with col2:
-            month_num = st.selectbox("🗓️ Month", 
-                                   options=[("01","January"), ("02","February"), ("03","March"), 
-                                            ("04","April"), ("05","May"), ("06","June"), 
-                                            ("07","July"), ("08","August"), ("09","September"), 
-                                            ("10","October"), ("11","November"), ("12","December")],
-                                   format_func=lambda x: f"{x[0]} - {x[1]}")
-        
-        selected_month = f"{year}-{month_num[0]}"
-        st.success(f"📅 Selected Month: **{selected_month}**")
-        
-        uploaded = st.file_uploader("Excel ya CSV file upload karo (RoomNo, Name, Food_Dues, Service_Charges, Previous)", 
-                                  type=["csv", "xlsx"])
-        
-        if uploaded and st.button("🚀 Upload Dues List", type="primary"):
-            try:
-                if uploaded.name.endswith(".csv"):
-                    df = pd.read_csv(uploaded)
-                else:
-                    df = pd.read_excel(uploaded)
-                
-                # Rename columns
-                df = df.rename(columns={
-                    "Room No": "RoomNo", "room no": "RoomNo", "Roomno": "RoomNo",
-                    "Name": "Name", "name": "Name",
-                    "Food Dues": "Food_Dues", "food dues": "Food_Dues",
-                    "Service Charges": "Service_Charges", "service charges": "Service_Charges",
-                    "Service Dues": "Service_Charges", "service dues": "Service_Charges",
-                    "Previous": "Previous", "previous": "Previous"
-                })
-                
-                # Required columns check & fill
-                for col in ["RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous"]:
-                    if col not in df.columns:
-                        df[col] = 0 if col in ["Food_Dues", "Service_Charges", "Previous"] else ""
-                
-                # Auto add Month (Yeh naya feature hai)
-                df["Month"] = selected_month
-                
-                # Calculate Total
-                df["Total"] = (pd.to_numeric(df["Food_Dues"], errors='coerce').fillna(0) +
-                               pd.to_numeric(df["Service_Charges"], errors='coerce').fillna(0) +
-                               pd.to_numeric(df["Previous"], errors='coerce').fillna(0))
-                
-                # Remove duplicate month data
-                existing = load_dues()
-                existing = existing[existing["Month"] != selected_month]
-                new_df = pd.concat([existing, df], ignore_index=True)
-                save_dues(new_df)
-                
-                st.success(f"🎉 {len(df)} students ka data **{selected_month}** month ke liye upload ho gaya!")
-                st.balloons()
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
+        if uploaded and st.button("Upload Dues"):
+            if uploaded.name.endswith(".csv"):
+                df = pd.read_csv(uploaded)
+            else:
+                df = pd.read_excel(uploaded)
+            
+            df = df.rename(columns={
+                "Room No": "RoomNo", "room no": "RoomNo", "Roomno": "RoomNo",
+                "Name": "Name", "name": "Name",
+                "Food Dues": "Food_Dues", "food dues": "Food_Dues",
+                "Service Charges": "Service_Charges", "service charges": "Service_Charges",
+                "Previous": "Previous", "previous": "Previous"
+            })
+            
+            for col in ["RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous"]:
+                if col not in df.columns:
+                    df[col] = 0 if col in ["Food_Dues", "Service_Charges", "Previous"] else ""
+            
+            df["Month"] = month
+            df["Total"] = (pd.to_numeric(df.get("Food_Dues", 0), errors='coerce').fillna(0) +
+                           pd.to_numeric(df.get("Service_Charges", 0), errors='coerce').fillna(0) +
+                           pd.to_numeric(df.get("Previous", 0), errors='coerce').fillna(0))
+            
+            existing = load_dues()
+            existing = existing[existing.get("Month") != month]
+            new_df = pd.concat([existing, df], ignore_index=True)
+            save_dues(new_df)
+            st.success(f"✅ {len(df)} students ka data {month} ke liye upload ho gaya!")
 
     with tab2:
-        st.header("📊 Monthly Dashboard")
+        st.header("Monthly Dashboard")
         dues = load_dues()
+        payments = load_payments()
         if not dues.empty:
             month_list = sorted(dues["Month"].unique(), reverse=True)
             selected = st.selectbox("Month select karo", month_list)
-            month_dues = dues[dues["Month"] == selected]
-            payments = load_payments()
-            month_payments = payments[payments["Month"] == selected]
+            month_dues = dues[dues["Month"] == selected].copy()
             
             total_due = month_dues["Total"].sum()
-            collected = month_dues[month_dues["RoomNo"].isin(month_payments.get("RoomNo", []))]["Total"].sum() if not month_payments.empty else 0
+            collected = 0
+            if not payments.empty and "RoomNo" in payments.columns:
+                month_payments = payments[payments["Month"] == selected]
+                collected = month_dues[month_dues["RoomNo"].isin(month_payments["RoomNo"])]["Total"].sum()
+
             remaining = total_due - collected
             
             col1, col2, col3 = st.columns(3)
@@ -179,42 +128,40 @@ if role == "Admin":
         st.header("⏳ All Pending Dues")
         dues = load_dues()
         payments = load_payments()
-        merged = dues.merge(payments[["Month", "RoomNo", "Submission_Date"]], on=["Month", "RoomNo"], how="left")
-        pending = merged[pd.isna(merged["Submission_Date"])].copy()
         
-        if pending.empty:
-            st.success("Sab students ne payment kar diya! 🎉")
+        if dues.empty:
+            st.info("No dues data uploaded yet.")
         else:
-            summary = pending.groupby(["RoomNo", "Name"]).agg(
-                Total_Remaining=("Total", "sum"),
-                Pending_Months=("Month", lambda x: ", ".join(sorted(x)))
-            ).reset_index()
-            st.metric("Total Pending Amount", f"₹ {pending['Total'].sum():,.0f}")
-            st.dataframe(summary[["RoomNo", "Name", "Total_Remaining", "Pending_Months"]], 
-                        use_container_width=True, hide_index=True)
+            # Safe merge
+            payment_cols = ["Month", "RoomNo", "Submission_Date"]
+            if not payments.empty:
+                pay_df = payments[[col for col in payment_cols if col in payments.columns]]
+            else:
+                pay_df = pd.DataFrame(columns=payment_cols)
+            
+            merged = dues.merge(pay_df, on=["Month", "RoomNo"], how="left")
+            pending = merged[pd.isna(merged.get("Submission_Date"))].copy()
+            
+            if pending.empty:
+                st.success("Sab students ne payment kar diya! 🎉")
+            else:
+                summary = pending.groupby(["RoomNo", "Name"]).agg(
+                    Total_Remaining=("Total", "sum"),
+                    Pending_Months=("Month", lambda x: ", ".join(sorted(x)))
+                ).reset_index()
+                st.metric("Total Pending Amount", f"₹ {pending['Total'].sum():,.0f}")
+                st.dataframe(summary[["RoomNo", "Name", "Total_Remaining", "Pending_Months"]], 
+                            use_container_width=True, hide_index=True)
 
     with tab4:
-        st.header("📋 All Submissions")
+        st.header("All Submissions")
         payments = load_payments()
-        if not payments.empty:
+        if payments.empty:
+            st.info("No submissions yet.")
+        else:
             st.dataframe(payments, use_container_width=True, hide_index=True)
 
-    with tab5:
-        st.header("🗑️ Clear Month Data")
-        dues = load_dues()
-        if not dues.empty:
-            month_list = sorted(dues["Month"].unique(), reverse=True)
-            selected_month = st.selectbox("Kis month ko delete karna hai?", month_list)
-            
-            if st.button("🗑️ Clear This Month", type="primary"):
-                if st.checkbox("Kya aap pakka is month ko delete karna chahte hain?", value=False):
-                    existing = load_dues()
-                    new_df = existing[existing["Month"] != selected_month]
-                    save_dues(new_df)
-                    st.success(f"✅ Month **{selected_month}** ki puri list delete kar di gayi hai.")
-                    st.rerun()
-
-else:
+else:  # Student Section
     st.header("Apni Mess Dues Receipt Submit Karo")
     dues = load_dues()
     if dues.empty:
@@ -235,18 +182,20 @@ else:
         else:
             student = student_df.iloc[0]
             
-            st.success(f"**Room No:** {student['RoomNo']}")
-            st.success(f"**Name:** {student['Name']}")
+            st.success(f"**Room No:** {student.get('RoomNo', '')}")
+            st.success(f"**Name:** {student.get('Name', '')}")
             st.info(f"**Food Dues:** ₹ {student.get('Food_Dues', 0)}")
             st.info(f"**Service Charges:** ₹ {student.get('Service_Charges', 0)}")
             st.info(f"**Previous Amount:** ₹ {student.get('Previous', 0)}")
             st.info(f"**Total Amount:** ₹ {student.get('Total', 0)}")
             
             payments = load_payments()
-            already = payments[(payments["Month"] == selected_month) & 
-                              (payments["RoomNo"].astype(str).str.strip() == str(room_input).strip())]
+            already = False
+            if not payments.empty and "RoomNo" in payments.columns:
+                already = not payments[(payments["Month"] == selected_month) & 
+                                      (payments["RoomNo"].astype(str).str.strip() == str(room_input).strip())].empty
             
-            if not already.empty:
+            if already:
                 st.warning("Aap is month ke liye already submit kar chuke hain.")
             else:
                 receipt = st.file_uploader("Fee Receipt upload karo (JPG, PNG ya PDF)", 
@@ -258,8 +207,8 @@ else:
                     
                     new_row = pd.DataFrame([{
                         "Month": selected_month,
-                        "RoomNo": student["RoomNo"],
-                        "Name": student["Name"],
+                        "RoomNo": student.get("RoomNo", room_input),
+                        "Name": student.get("Name", ""),
                         "Phone": student.get("Phone", ""),
                         "Submission_Date": datetime.now().strftime("%Y-%m-%d %H:%M"),
                         "Receipt_File": filename
@@ -270,4 +219,4 @@ else:
                     st.success("🎉 Receipt successfully submit ho gaya! Shukriya.")
                     st.balloons()
 
-st.caption("Pakistan Zindabad")
+st.caption("Zubair Hall Mess Dues System")
