@@ -21,7 +21,13 @@ def load_dues():
     try:
         sheet = gc.open("Hostel Dues Data").worksheet("Dues")
         data = sheet.get_all_records()
-        return pd.DataFrame(data)
+        df = pd.DataFrame(data)
+        # Ensure correct column types
+        numeric_cols = ["Food_Dues", "Service_Charges", "Previous", "Total"]
+        for col in numeric_cols:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        return df
     except:
         return pd.DataFrame(columns=["Month", "RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous", "Total"])
 
@@ -36,7 +42,8 @@ def load_payments():
     try:
         sheet = gc.open("Hostel Dues Data").worksheet("Payments")
         data = sheet.get_all_records()
-        return pd.DataFrame(data)
+        df = pd.DataFrame(data)
+        return df
     except:
         return pd.DataFrame(columns=["Month", "RoomNo", "Name", "Phone", "Submission_Date", "Receipt_File"])
 
@@ -46,6 +53,7 @@ def save_payments(df):
     sheet.clear()
     sheet.update([df.columns.values.tolist()] + df.values.tolist())
 
+# ====================== MAIN APP ======================
 st.title("Zubair Hall Mess Dues System")
 st.caption("**Made by Abdul Hadi 2025 (S) CYS 90**")
 
@@ -53,7 +61,7 @@ role = st.sidebar.selectbox("Select Role", ["Student", "Admin"])
 
 if role == "Admin":
     password = st.sidebar.text_input("Admin Password", type="password")
-    if password != "hostel321":
+    if password != "hostel123":
         st.sidebar.warning("Wrong Password")
         st.stop()
 
@@ -71,20 +79,22 @@ if role == "Admin":
             else:
                 df = pd.read_excel(uploaded)
             
-            df = df.rename(columns={"Room No": "RoomNo", "room no": "RoomNo", "Roomno": "RoomNo",
-                                    "Name": "Name", "name": "Name",
-                                    "Food Dues": "Food_Dues", "food dues": "Food_Dues",
-                                    "Service Charges": "Service_Charges", "service charges": "Service_Charges",
-                                    "Previous": "Previous", "previous": "Previous"})
+            df = df.rename(columns={
+                "Room No": "RoomNo", "room no": "RoomNo", "Roomno": "RoomNo",
+                "Name": "Name", "name": "Name",
+                "Food Dues": "Food_Dues", "food dues": "Food_Dues",
+                "Service Charges": "Service_Charges", "service charges": "Service_Charges",
+                "Previous": "Previous", "previous": "Previous"
+            })
             
             for col in ["RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous"]:
                 if col not in df.columns:
                     df[col] = 0 if col in ["Food_Dues", "Service_Charges", "Previous"] else ""
             
             df["Month"] = month
-            df["Total"] = (pd.to_numeric(df["Food_Dues"], errors='coerce').fillna(0) +
-                           pd.to_numeric(df["Service_Charges"], errors='coerce').fillna(0) +
-                           pd.to_numeric(df["Previous"], errors='coerce').fillna(0))
+            df["Total"] = (pd.to_numeric(df.get("Food_Dues", 0), errors='coerce').fillna(0) +
+                           pd.to_numeric(df.get("Service_Charges", 0), errors='coerce').fillna(0) +
+                           pd.to_numeric(df.get("Previous", 0), errors='coerce').fillna(0))
             
             existing = load_dues()
             existing = existing[existing["Month"] != month]
@@ -98,18 +108,22 @@ if role == "Admin":
         if not dues.empty:
             month_list = sorted(dues["Month"].unique(), reverse=True)
             selected = st.selectbox("Month select karo", month_list)
-            month_dues = dues[dues["Month"] == selected]
+            month_dues = dues[dues["Month"] == selected].copy()
             payments = load_payments()
-            month_payments = payments[payments["Month"] == selected]
-            
+            month_payments = payments[payments["Month"] == selected] if not payments.empty else pd.DataFrame()
+
             total_due = month_dues["Total"].sum()
-            collected = month_dues[month_dues["RoomNo"].isin(month_payments.get("RoomNo", []))]["Total"].sum() if not month_payments.empty else 0
+            collected = 0
+            if not month_payments.empty and "RoomNo" in month_payments.columns:
+                collected = month_dues[month_dues["RoomNo"].isin(month_payments["RoomNo"])]["Total"].sum()
+
             remaining = total_due - collected
             
             col1, col2, col3 = st.columns(3)
             col1.metric("Total Dues", f"₹ {total_due:,.0f}")
             col2.metric("Collected", f"₹ {collected:,.0f}")
             col3.metric("Remaining", f"₹ {remaining:,.0f}")
+            
             st.dataframe(month_dues[["RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous", "Total"]], 
                         use_container_width=True, hide_index=True)
 
@@ -117,26 +131,34 @@ if role == "Admin":
         st.header("⏳ All Pending Dues")
         dues = load_dues()
         payments = load_payments()
-        merged = dues.merge(payments[["Month", "RoomNo", "Submission_Date"]], on=["Month", "RoomNo"], how="left")
-        pending = merged[pd.isna(merged["Submission_Date"])].copy()
-        if pending.empty:
-            st.success("Sab students ne payment kar diya! 🎉")
+        
+        if dues.empty:
+            st.info("No dues data yet.")
         else:
-            summary = pending.groupby(["RoomNo", "Name"]).agg(
-                Total_Remaining=("Total", "sum"),
-                Pending_Months=("Month", lambda x: ", ".join(sorted(x)))
-            ).reset_index()
-            st.metric("Total Pending Amount", f"₹ {pending['Total'].sum():,.0f}")
-            st.dataframe(summary[["RoomNo", "Name", "Total_Remaining", "Pending_Months"]], 
-                        use_container_width=True, hide_index=True)
+            merged = dues.merge(payments[["Month", "RoomNo", "Submission_Date"]] if not payments.empty and "RoomNo" in payments.columns else pd.DataFrame(columns=["Month", "RoomNo", "Submission_Date"]), 
+                              on=["Month", "RoomNo"], how="left")
+            pending = merged[pd.isna(merged.get("Submission_Date"))].copy()
+            
+            if pending.empty:
+                st.success("Sab students ne payment kar diya! 🎉")
+            else:
+                summary = pending.groupby(["RoomNo", "Name"]).agg(
+                    Total_Remaining=("Total", "sum"),
+                    Pending_Months=("Month", lambda x: ", ".join(sorted(x)))
+                ).reset_index()
+                st.metric("Total Pending Amount", f"₹ {pending['Total'].sum():,.0f}")
+                st.dataframe(summary[["RoomNo", "Name", "Total_Remaining", "Pending_Months"]], 
+                            use_container_width=True, hide_index=True)
 
     with tab4:
         st.header("All Submissions")
         payments = load_payments()
-        if not payments.empty:
+        if payments.empty:
+            st.info("No submissions yet.")
+        else:
             st.dataframe(payments, use_container_width=True, hide_index=True)
 
-else:
+else:  # Student Section
     st.header("Apni Mess Dues Receipt Submit Karo")
     dues = load_dues()
     if dues.empty:
@@ -166,7 +188,7 @@ else:
             
             payments = load_payments()
             already = payments[(payments["Month"] == selected_month) & 
-                              (payments["RoomNo"].astype(str).str.strip() == str(room_input).strip())]
+                              (payments.get("RoomNo", pd.Series()).astype(str).str.strip() == str(room_input).strip())]
             
             if not already.empty:
                 st.warning("Aap is month ke liye already submit kar chuke hain.")
