@@ -94,7 +94,9 @@ if role == "Admin":
                            pd.to_numeric(df.get("Previous", 0), errors='coerce').fillna(0))
             
             existing = load_dues()
-            existing = existing[existing.get("Month") != month]
+            # Safe filter
+            if "Month" in existing.columns:
+                existing = existing[existing["Month"] != month]
             new_df = pd.concat([existing, df], ignore_index=True)
             save_dues(new_df)
             st.success(f"✅ {len(df)} students ka data {month} ke liye upload ho gaya!")
@@ -102,11 +104,11 @@ if role == "Admin":
     with tab2:
         st.header("Monthly Dashboard")
         dues = load_dues()
-        payments = load_payments()
         if not dues.empty:
             month_list = sorted(dues["Month"].unique(), reverse=True)
             selected = st.selectbox("Month select karo", month_list)
             month_dues = dues[dues["Month"] == selected].copy()
+            payments = load_payments()
             
             total_due = month_dues["Total"].sum()
             collected = 0
@@ -132,13 +134,7 @@ if role == "Admin":
         if dues.empty:
             st.info("No dues data uploaded yet.")
         else:
-            # Safe merge
-            payment_cols = ["Month", "RoomNo", "Submission_Date"]
-            if not payments.empty:
-                pay_df = payments[[col for col in payment_cols if col in payments.columns]]
-            else:
-                pay_df = pd.DataFrame(columns=payment_cols)
-            
+            pay_df = payments[["Month", "RoomNo", "Submission_Date"]] if not payments.empty and "RoomNo" in payments.columns else pd.DataFrame(columns=["Month", "RoomNo", "Submission_Date"])
             merged = dues.merge(pay_df, on=["Month", "RoomNo"], how="left")
             pending = merged[pd.isna(merged.get("Submission_Date"))].copy()
             
@@ -219,4 +215,4 @@ else:  # Student Section
                     st.success("🎉 Receipt successfully submit ho gaya! Shukriya.")
                     st.balloons()
 
-st.caption("Zubair Hall Mess Dues System")
+st.caption("100% Google Safe • Laptop off kar sakte ho • Zubair Hall Mess Dues System")
