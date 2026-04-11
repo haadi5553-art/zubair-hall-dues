@@ -81,43 +81,14 @@ hall_passwords = {
 senior_password = "senior@1122"
 
 st.title("🏛️ University Mess Dues Management System")
-st.caption("**Made by Abdul Hadi 2025 (S) CYS 90**")
+st.caption("**Made by Abdul Hadi 2025 (S) CYS 90** 🔑")
 
 role = st.sidebar.selectbox("Select Role", ["Student", "Hall Admin", "Senior Warden"])
 
-# ====================== SENIOR WARDEN ======================
-if role == "Senior Warden":
-    pw = st.sidebar.text_input("Senior Warden Password", type="password")
-    if pw != senior_password:
-        st.sidebar.warning("Wrong Password")
-        st.stop()
-
-    st.header("👨‍💼 Senior Warden Dashboard - All 9 Halls")
-    total_all = collected_all = remaining_all = 0
-    summary = []
-    for hall in halls:
-        dues = load_dues(hall)
-        if not dues.empty:
-            total = dues["Total"].sum()
-            payments = load_payments(hall)
-            collected = dues[dues["RoomNo"].isin(payments["RoomNo"])]["Total"].sum() if not payments.empty and "RoomNo" in payments.columns else 0
-            remaining = total - collected
-            total_all += total
-            collected_all += collected
-            remaining_all += remaining
-            summary.append({"Hall": hall, "Total": total, "Collected": collected, "Remaining": remaining})
-    
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Grand Total", f"Rs {total_all:,.0f}")
-    col2.metric("Total Collected", f"Rs {collected_all:,.0f}")
-    col3.metric("Total Remaining", f"Rs {remaining_all:,.0f}")
-    if summary:
-        st.dataframe(pd.DataFrame(summary), use_container_width=True, hide_index=True)
-
 # ====================== HALL ADMIN ======================
-elif role == "Hall Admin":
+if role == "Hall Admin":
     hall_name = st.sidebar.selectbox("Select Your Hall", halls)
-    if st.sidebar.text_input("Hall Admin Password", type="password") != hall_passwords.get(hall_name):
+    if st.sidebar.text_input("🔑 Hall Admin Password", type="password") != hall_passwords.get(hall_name):
         st.sidebar.warning("Wrong Password")
         st.stop()
 
@@ -176,7 +147,6 @@ elif role == "Hall Admin":
             col2.metric("Collected", f"Rs {collected:,.0f}")
             col3.metric("Remaining", f"Rs {total-collected:,.0f}")
             
-            # Show RoomNo properly
             st.dataframe(month_dues[["RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous", "Total"]], 
                         use_container_width=True, hide_index=True)
 
@@ -208,7 +178,7 @@ elif role == "Hall Admin":
                 save_dues(new_dues, hall_name)
                 st.success(f"{month_to_manage} ki list delete ho gayi!")
 
-# ====================== STUDENT VIEW (Multiple Students in Same Room) ======================
+# ====================== STUDENT VIEW ======================
 else:
     st.header("Apni Mess Dues Receipt Submit Karo")
     hall_name = st.sidebar.selectbox("Select Your Hall", halls)
@@ -219,55 +189,45 @@ else:
     
     month_list = sorted(dues["Month"].unique(), reverse=True)
     selected_month = st.selectbox("Month select karo", month_list)
-    room_input = st.text_input("Apna Room Number daalo")
-    
+    room_input = st.text_input("Apna Room Number daalo", key="room_input")
+
     if room_input:
         student_df = dues[(dues["Month"] == selected_month) & 
                          (dues["RoomNo"].astype(str).str.strip() == str(room_input).strip())]
         
         if student_df.empty:
-            st.error("Yeh Room Number is month mein nahi mila.")
+            st.error("❌ Yeh Room Number is month mein nahi mila.")
         else:
             st.subheader(f"Room No: {room_input} - {len(student_df)} Students")
             
             # Show all students in the room
             display_df = student_df[["RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous", "Total"]].copy()
-            display_df = display_df.rename(columns={
-                "Food_Dues": "Food Dues", 
-                "Service_Charges": "Service Charges"
-            })
             st.dataframe(display_df, use_container_width=True, hide_index=True)
 
-            # Receipt Upload for selected student
-            payments = load_payments(hall_name)
-            selected_student = st.selectbox("Select Student to Submit Receipt", student_df["Name"].tolist())
-            
+            # Select student for receipt
+            selected_student = st.selectbox("Select Student for Receipt", student_df["Name"].tolist())
             student_row = student_df[student_df["Name"] == selected_student].iloc[0]
+
+            payments = load_payments(hall_name)
             
-            already = not payments[(payments["Month"] == selected_month) & 
-                                  (payments["RoomNo"].astype(str).str.strip() == str(room_input).strip()) & 
-                                  (payments["Name"] == selected_student)].empty
+            receipt = st.file_uploader("Fee Receipt upload karo (JPG, PNG, PDF)", type=["jpg", "jpeg", "png", "pdf"])
             
-            if already:
-                st.warning(f"{selected_student} ke liye already receipt submit ho chuka hai.")
-            else:
-                receipt = st.file_uploader("Fee Receipt upload karo", type=["jpg", "jpeg", "png", "pdf"])
-                if receipt and st.button("✅ Submit Receipt"):
-                    file_ext = receipt.name.split(".")[-1]
-                    filename = f"{selected_month}_Room{room_input}_{selected_student}_{uuid.uuid4().hex[:8]}.{file_ext}"
-                    
-                    new_row = pd.DataFrame([{
-                        "Month": selected_month,
-                        "RoomNo": student_row["RoomNo"],
-                        "Name": selected_student,
-                        "Phone": student_row.get("Phone", ""),
-                        "Submission_Date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                        "Receipt_File": filename
-                    }])
-                    
-                    updated = pd.concat([payments, new_row], ignore_index=True)
-                    save_payments(updated, hall_name)
-                    st.success(f"{selected_student} ka receipt successfully submit ho gaya!")
-                    st.balloons()
+            if receipt and st.button("✅ Submit Receipt"):
+                file_ext = receipt.name.split(".")[-1]
+                filename = f"{selected_month}_Room{room_input}_{selected_student}_{uuid.uuid4().hex[:8]}.{file_ext}"
+                
+                new_row = pd.DataFrame([{
+                    "Month": selected_month,
+                    "RoomNo": student_row["RoomNo"],
+                    "Name": selected_student,
+                    "Phone": student_row.get("Phone", ""),
+                    "Submission_Date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "Receipt_File": filename
+                }])
+                
+                updated = pd.concat([payments, new_row], ignore_index=True)
+                save_payments(updated, hall_name)
+                st.success(f"🎉 {selected_student} ka receipt successfully submit ho gaya!")
+                st.balloons()
 
 st.caption("University Mess Dues System • Case Insensitive • Multiple Students per Room")
