@@ -31,7 +31,12 @@ def load_dues(hall_name):
 
 def save_dues(df, hall_name):
     gc = get_google_sheet()
-    sheet = gc.open("Hostel Dues Data").worksheet(hall_name)
+    spreadsheet = gc.open("Hostel Dues Data")
+    try:
+        sheet = spreadsheet.worksheet(hall_name)
+    except gspread.exceptions.WorksheetNotFound:
+        sheet = spreadsheet.add_worksheet(title=hall_name, rows=1000, cols=20)
+    
     sheet.clear()
     sheet.update([df.columns.values.tolist()] + df.values.tolist())
 
