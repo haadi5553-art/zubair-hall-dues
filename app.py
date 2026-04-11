@@ -12,7 +12,6 @@ def get_google_sheet():
     credentials = Credentials.from_service_account_info(creds_dict, scopes=["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"])
     return gspread.authorize(credentials)
 
-# ====================== STRONG CASE INSENSITIVE STANDARDIZER ======================
 def standardize_columns(df):
     df = df.rename(columns=str.strip)
     column_map = {
@@ -31,12 +30,10 @@ def load_dues(hall_name):
         sheet = gc.open("Hostel Dues Data").worksheet(hall_name)
         df = pd.DataFrame(sheet.get_all_records())
         df = standardize_columns(df)
-        
         numeric_cols = ["Food_Dues", "Service_Charges", "Previous", "Total"]
         for col in numeric_cols:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-        
         if "Total" not in df.columns and {"Food_Dues", "Service_Charges", "Previous"}.issubset(df.columns):
             df["Total"] = df["Food_Dues"] + df["Service_Charges"] + df["Previous"]
         return df
@@ -88,8 +85,41 @@ st.caption("**Made by Abdul Hadi 2025 (S) CYS 90**")
 
 role = st.sidebar.selectbox("Select Role", ["Student", "Hall Admin", "Senior Warden"])
 
+# ====================== SENIOR WARDEN ======================
+if role == "Senior Warden":
+    pw = st.sidebar.text_input("Senior Warden Password", type="password")
+    if pw != senior_password:
+        st.sidebar.warning("Wrong Password")
+        st.stop()
+
+    st.header("👨‍💼 Senior Warden Dashboard - All 9 Halls")
+    
+    total_all = collected_all = remaining_all = 0
+    summary = []
+
+    for hall in halls:
+        dues = load_dues(hall)
+        if not dues.empty:
+            total = dues["Total"].sum()
+            payments = load_payments(hall)
+            collected = dues[dues["RoomNo"].isin(payments["RoomNo"])]["Total"].sum() if not payments.empty and "RoomNo" in payments.columns else 0
+            remaining = total - collected
+            
+            total_all += total
+            collected_all += collected
+            remaining_all += remaining
+            summary.append({"Hall": hall, "Total": total, "Collected": collected, "Remaining": remaining})
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Grand Total (All Halls)", f"Rs {total_all:,.0f}")
+    col2.metric("Total Collected", f"Rs {collected_all:,.0f}")
+    col3.metric("Total Remaining", f"Rs {remaining_all:,.0f}")
+
+    if summary:
+        st.dataframe(pd.DataFrame(summary), use_container_width=True, hide_index=True)
+
 # ====================== HALL ADMIN ======================
-if role == "Hall Admin":
+elif role == "Hall Admin":
     hall_name = st.sidebar.selectbox("Select Your Hall", halls)
     if st.sidebar.text_input("Hall Admin Password", type="password") != hall_passwords.get(hall_name):
         st.sidebar.warning("Wrong Password")
@@ -184,7 +214,7 @@ if role == "Hall Admin":
                     save_dues(new_dues, hall_name)
                     st.success(f"{month_to_manage} ki puri list delete ho gayi!")
             with col2:
-                st.info("To update: Simply upload new Excel with same month. It will replace old data.")
+                st.info("Update karne ke liye same month mein naya Excel upload karein.")
 
 else:  # Student View
     st.header("Apni Mess Dues Receipt Submit Karo")
@@ -208,4 +238,4 @@ else:  # Student View
             st.dataframe(student_df[["RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous", "Total"]], 
                         use_container_width=True, hide_index=True)
 
-st.caption("University Mess Dues System • Case Insensitive • Delete/Update Option Added")
+st.caption("University Mess Dues System • Case Insensitive • Senior Warden Fixed")
