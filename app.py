@@ -215,4 +215,4 @@ else:  # Student Section
                     st.success("🎉 Receipt successfully submit ho gaya! Shukriya.")
                     st.balloons()
 
-st.caption("100% Google Safe • Laptop off kar sakte ho • Zubair Hall Mess Dues System")
+st.caption("lo bhai sub kuch kr dya theek hy ab  • Zubair Hall Mess Dues System")
