@@ -573,9 +573,15 @@ elif role == "Hall Admin":
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("🗑️ Is Month ko Delete Karo", type="primary"):
+                    # Delete dues
                     new_dues = dues[dues["Month"] != month_to_del]
                     save_dues(new_dues, hall)
-                    st.success(f"✅ '{month_to_del}' ka pura data delete ho gaya!")
+                    # Delete payments of same month
+                    pay_df = load_payments(hall)
+                    if not pay_df.empty and "Month" in pay_df.columns:
+                        new_pay = pay_df[pay_df["Month"] != month_to_del]
+                        save_payments(new_pay, hall)
+                    st.success(f"✅ '{month_to_del}' ka dues + receipts dono delete ho gaye!")
             with col2:
                 st.info("💡 Update karne ke liye same month dobara Upload Dues tab se upload karo.")
 
@@ -659,6 +665,59 @@ elif role == "Senior Warden":
         st.subheader("📈 Hall-wise Collection Chart")
         chart_data = summary_df.set_index("Hall")[["Collected (Rs)", "Remaining (Rs)"]]
         st.bar_chart(chart_data)
+
+    # ===== MANAGE ALL HALLS =====
+    st.markdown("---")
+    st.subheader("🗑️ Kisi Bhi Hall ka Month Delete Karo")
+
+    del_col1, del_col2 = st.columns(2)
+    with del_col1:
+        del_hall = st.selectbox("Hall Select Karo", halls, key="warden_del_hall")
+    with del_col2:
+        hall_dues_for_del = load_dues(del_hall)
+        if not hall_dues_for_del.empty and "Month" in hall_dues_for_del.columns:
+            available_months = sorted(hall_dues_for_del["Month"].unique(), reverse=True)
+            del_month = st.selectbox("Month Select Karo", available_months, key="warden_del_month")
+        else:
+            del_month = None
+            st.info("Is hall mein koi data nahi.")
+
+    if del_month:
+        st.warning(f"⚠️ {del_hall} — '{del_month}' ka dues + payments data delete hoga.")
+        if st.button("🗑️ Delete Karo", type="primary", key="warden_delete_btn"):
+            # Delete dues
+            new_dues = hall_dues_for_del[hall_dues_for_del["Month"] != del_month]
+            save_dues(new_dues, del_hall)
+            # Delete payments
+            hall_pay_for_del = load_payments(del_hall)
+            if not hall_pay_for_del.empty and "Month" in hall_pay_for_del.columns:
+                new_pay = hall_pay_for_del[hall_pay_for_del["Month"] != del_month]
+                save_payments(new_pay, del_hall)
+            st.success(f"✅ {del_hall} — '{del_month}' ka pura data delete ho gaya!")
+
+    # ===== ALL HALLS PAYMENTS OVERVIEW =====
+    st.markdown("---")
+    st.subheader("📋 Sab Halls ki Payments Overview")
+
+    all_pay_rows = []
+    for h in halls:
+        hp = load_payments(h)
+        if not hp.empty and "Month" in hp.columns:
+            for month_val in hp["Month"].unique():
+                mp = hp[hp["Month"] == month_val]
+                total_col = pd.to_numeric(mp.get("Amount_Paid", pd.Series([0])), errors="coerce").fillna(0).sum()
+                all_pay_rows.append({
+                    "Hall": h,
+                    "Month": month_val,
+                    "Receipts": len(mp),
+                    "Amount Collected (Rs)": int(total_col)
+                })
+
+    if all_pay_rows:
+        all_pay_df = pd.DataFrame(all_pay_rows).sort_values(["Hall", "Month"])
+        st.dataframe(all_pay_df, use_container_width=True, hide_index=True)
+    else:
+        st.info("Abhi koi hall ki payments record nahi hain.")
 
 st.markdown("---")
 st.caption("🏛️ University Mess Dues System | Abdul Hadi 2025 (S) CYS 90 | Powered by Streamlit + Google Sheets")
