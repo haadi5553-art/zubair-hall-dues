@@ -822,23 +822,41 @@ elif role == "Senior Warden":
 
     all_pay_rows = []
     for h in halls:
-        hp = load_payments(h)
-        if not hp.empty and "Month" in hp.columns:
-            for month_val in hp["Month"].unique():
-                mp = hp[hp["Month"] == month_val]
-                total_col = pd.to_numeric(mp.get("Amount_Paid", pd.Series([0])), errors="coerce").fillna(0).sum()
+        h_dues = load_dues(h)
+        h_pays = load_payments(h)
+
+        if not h_dues.empty and "Month" in h_dues.columns:
+            for month_val in sorted(h_dues["Month"].unique(), reverse=True):
+                if month_val == "Unknown":
+                    continue
+                month_dues  = h_dues[h_dues["Month"] == month_val]
+                total_dues  = int(month_dues["Total"].sum())
+                students    = len(month_dues)
+
+                collected = 0
+                receipts  = 0
+                if not h_pays.empty and "Month" in h_pays.columns:
+                    mp = h_pays[h_pays["Month"] == month_val]
+                    receipts  = len(mp)
+                    if "Amount_Paid" in mp.columns:
+                        collected = int(pd.to_numeric(mp["Amount_Paid"], errors="coerce").fillna(0).sum())
+
                 all_pay_rows.append({
-                    "Hall": h,
-                    "Month": month_val,
-                    "Receipts": len(mp),
-                    "Amount Collected (Rs)": int(total_col)
+                    "Hall":             h,
+                    "Month":            month_val,
+                    "Students":         students,
+                    "Total Dues (Rs)":  total_dues,
+                    "Receipts":         receipts,
+                    "Collected (Rs)":   collected,
+                    "Remaining (Rs)":   max(0, total_dues - collected),
                 })
 
     if all_pay_rows:
-        all_pay_df = pd.DataFrame(all_pay_rows).sort_values(["Hall", "Month"])
+        all_pay_df = pd.DataFrame(all_pay_rows).sort_values(["Month","Hall"], ascending=[False,True])
         st.dataframe(all_pay_df, use_container_width=True, hide_index=True)
     else:
-        st.info("Abhi koi hall ki payments record nahi hain.")
+        st.info("Abhi kisi bhi hall mein data upload nahi hua.")
+
 
 st.markdown("---")
 st.caption("🏛️ University Mess Dues System | Abdul Hadi 2025 (S) CYS 90 | Powered by Streamlit + Google Sheets")
