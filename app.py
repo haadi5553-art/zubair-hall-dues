@@ -496,7 +496,9 @@ elif role == "Hall Admin":
                 # Partial or unpaid = pending
                 def get_paid_amt(row):
                     sp = month_p[month_p["_key"] == row["_key"]]
-                    return pd.to_numeric(sp["Amount_Paid"] if "Amount_Paid" in sp.columns else 0, errors="coerce").fillna(0).sum()
+                    if "Amount_Paid" in sp.columns and not sp.empty:
+                        return pd.to_numeric(sp["Amount_Paid"], errors="coerce").fillna(0).sum()
+                    return 0
 
                 latest_dues["Paid"] = latest_dues.apply(get_paid_amt, axis=1)
                 latest_dues["Remaining"] = latest_dues["Total"] - latest_dues["Paid"]
