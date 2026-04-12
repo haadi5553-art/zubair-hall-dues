@@ -701,6 +701,16 @@ elif role == "Senior Warden":
 
     st.header("👨‍💼 Senior Warden Dashboard — Sab 9 Halls")
 
+    # Debug: show which halls have data
+    with st.expander("🔍 Hall Data Status (Debug)", expanded=False):
+        for h in halls:
+            hd = load_dues(h)
+            if hd.empty:
+                st.write(f"❌ {h} — No data")
+            else:
+                months = hd["Month"].unique().tolist() if "Month" in hd.columns else ["No Month col"]
+                st.write(f"✅ {h} — {len(hd)} rows — Months: {months}")
+
     # Collect all available months across all halls
     all_months = set()
     for h in halls:
