@@ -27,14 +27,23 @@ def get_google_sheet():
 
 # ================= CLEAN =================
 def standardize_columns(df):
-    df.columns = df.columns.str.strip()
-    return df.rename(columns={
-        "room no":"RoomNo","roomno":"RoomNo","room no.":"RoomNo",
-        "name":"Name",
-        "food dues":"Food_Dues",
-        "service charges":"Service_Charges",
-        "previous":"Previous"
-    })
+    df.columns = df.columns.str.strip().str.lower()
+
+    column_map = {
+        "room no": "RoomNo", "roomno": "RoomNo", "room no.": "RoomNo", "room": "RoomNo",
+        "name": "Name", "student name": "Name",
+        "food dues": "Food_Dues", "food_dues": "Food_Dues",
+        "service charges": "Service_Charges", "service_charges": "Service_Charges",
+        "previous": "Previous"
+    }
+
+    df = df.rename(columns=column_map)
+
+    for col in ["RoomNo","Name","Food_Dues","Service_Charges","Previous"]:
+        if col not in df.columns:
+            df[col] = "" if col in ["RoomNo","Name"] else 0
+
+    return df
 
 # ================= LOAD SAVE =================
 def load_dues(hall):
@@ -46,7 +55,11 @@ def load_dues(hall):
         for col in ["Food_Dues","Service_Charges","Previous"]:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
+        df["RoomNo"] = df["RoomNo"].astype(str).str.strip()
+        df["Name"] = df["Name"].astype(str).str.strip()
+
         df["Total"] = df["Food_Dues"] + df["Service_Charges"] + df["Previous"]
+
         return df
     except:
         return pd.DataFrame(columns=["Month","RoomNo","Name","Food_Dues","Service_Charges","Previous","Total"])
@@ -116,18 +129,20 @@ if role == "Student":
 
     st.subheader("All Students")
 
+    paid_rooms = payments["RoomNo"].astype(str).values if not payments.empty else []
+
     for i,row in dues.iterrows():
-        room = str(row["RoomNo"])
+        room = str(row.get("RoomNo","")).strip()
+        name = str(row.get("Name","")).strip()
 
         st.markdown(f"""
         <div style="padding:15px;background:#f1f3f6;border-radius:10px;margin-bottom:10px">
         <b>Room:</b> {room} <br>
-        <b>Name:</b> {row['Name']} <br>
+        <b>Name:</b> {name} <br>
         <b>Total:</b> Rs {row['Total']}
         </div>
         """, unsafe_allow_html=True)
 
-        paid_rooms = payments["RoomNo"].astype(str).values if not payments.empty else []
         if room in paid_rooms:
             st.success("✅ Paid")
 
@@ -157,7 +172,7 @@ if role == "Student":
                 new = pd.DataFrame([{
                     "Month":month,
                     "RoomNo":room,
-                    "Name":row["Name"],
+                    "Name":name,
                     "Submission_Date":datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "Receipt_File":path,
                     "File_Hash":file_hash
