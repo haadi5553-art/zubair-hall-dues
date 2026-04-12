@@ -223,7 +223,7 @@ if AUTO_REFRESH:
     refresh_rate = st.sidebar.selectbox("🔄 Auto Refresh", ["Off", "30 sec", "60 sec", "2 min"], index=2)
     rate_map = {"Off": 0, "30 sec": 30000, "60 sec": 60000, "2 min": 120000}
     if rate_map[refresh_rate] > 0:
-        st_autorefresh(interval=rate_map[refresh_rate], silent=True)
+        st_autorefresh(interval=rate_map[refresh_rate], key="autorefresh")
 
 
 # ==========================================
