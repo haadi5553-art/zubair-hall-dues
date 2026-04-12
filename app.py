@@ -52,7 +52,8 @@ h1 {color: #1a1a2e; font-size: 2rem;}
 
 
 # ================= GOOGLE SHEET =================
-def get_google_sheet():
+@st.cache_resource(ttl=300)
+def get_gspread_client():
     creds = st.secrets["gspread"]
     credentials = Credentials.from_service_account_info(
         creds,
@@ -62,6 +63,13 @@ def get_google_sheet():
         ]
     )
     return gspread.authorize(credentials)
+
+@st.cache_resource(ttl=300)
+def get_spreadsheet():
+    return get_gspread_client().open("Hostel Dues Data")
+
+def get_google_sheet():
+    return get_gspread_client()
 
 
 # ================= STANDARDIZE COLUMNS =================
@@ -102,7 +110,7 @@ def standardize_columns(df):
 # ================= LOAD / SAVE DUES =================
 def load_dues(hall):
     try:
-        sheet = get_google_sheet().open("Hostel Dues Data").worksheet(hall)
+        sheet = get_spreadsheet().worksheet(hall)
         df = pd.DataFrame(sheet.get_all_records())
 
         if df.empty:
@@ -143,7 +151,7 @@ def clean_for_sheets(df):
 
 
 def save_dues(df, hall):
-    sh = get_google_sheet().open("Hostel Dues Data")
+    sh = get_spreadsheet()
     try:
         ws = sh.worksheet(hall)
     except Exception:
@@ -151,19 +159,20 @@ def save_dues(df, hall):
     ws.clear()
     df = clean_for_sheets(df)
     ws.update([df.columns.values.tolist()] + df.values.tolist())
+    get_spreadsheet.clear()  # clear cache after write
 
 
 # ================= LOAD / SAVE PAYMENTS =================
 def load_payments(hall):
     try:
-        sheet = get_google_sheet().open("Hostel Dues Data").worksheet(f"{hall}_Payments")
+        sheet = get_spreadsheet().worksheet(f"{hall}_Payments")
         return pd.DataFrame(sheet.get_all_records())
     except Exception:
         return pd.DataFrame(columns=["Month","RoomNo","Name","Amount_Paid","Submission_Date","Receipt_File","File_Hash"])
 
 
 def save_payments(df, hall):
-    sh = get_google_sheet().open("Hostel Dues Data")
+    sh = get_spreadsheet()
     try:
         ws = sh.worksheet(f"{hall}_Payments")
     except Exception:
