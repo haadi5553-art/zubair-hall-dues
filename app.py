@@ -5,6 +5,12 @@ import gspread
 from google.oauth2.service_account import Credentials
 import uuid, hashlib, os
 
+try:
+    from streamlit_autorefresh import st_autorefresh
+    AUTO_REFRESH = True
+except ImportError:
+    AUTO_REFRESH = False
+
 st.set_page_config(page_title="University Mess Dues System", layout="wide", page_icon="🏛️")
 
 # ================= STYLE =================
@@ -211,6 +217,13 @@ st.title("🏛️ University Mess Dues Management System")
 st.caption("Made by Abdul Hadi 2025 (S) CYS 90")
 
 role = st.sidebar.selectbox("Select Role", ["Student", "Hall Admin", "Senior Warden"])
+
+# Auto refresh every 60 seconds
+if AUTO_REFRESH:
+    refresh_rate = st.sidebar.selectbox("🔄 Auto Refresh", ["Off", "30 sec", "60 sec", "2 min"], index=2)
+    rate_map = {"Off": 0, "30 sec": 30000, "60 sec": 60000, "2 min": 120000}
+    if rate_map[refresh_rate] > 0:
+        st_autorefresh(interval=rate_map[refresh_rate], silent=True)
 
 
 # ==========================================
