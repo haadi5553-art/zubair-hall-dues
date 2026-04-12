@@ -4,3 +4,4 @@ google-auth
 pandas
 openpyxl
 streamlit-autorefresh
+plotly
