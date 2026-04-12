@@ -52,7 +52,6 @@ h1 {color: #1a1a2e; font-size: 2rem;}
 
 
 # ================= GOOGLE SHEET =================
-@st.cache_resource(ttl=300)
 def get_gspread_client():
     creds = st.secrets["gspread"]
     credentials = Credentials.from_service_account_info(
@@ -64,7 +63,6 @@ def get_gspread_client():
     )
     return gspread.authorize(credentials)
 
-@st.cache_resource(ttl=300)
 def get_spreadsheet():
     return get_gspread_client().open("Hostel Dues Data")
 
@@ -159,7 +157,7 @@ def save_dues(df, hall):
     ws.clear()
     df = clean_for_sheets(df)
     ws.update([df.columns.values.tolist()] + df.values.tolist())
-    get_spreadsheet.clear()  # clear cache after write
+
 
 
 # ================= LOAD / SAVE PAYMENTS =================
@@ -297,11 +295,13 @@ if role == "Student":
                 key=f"files_{room}_{idx}"
             )
             amount_paid = st.number_input(
-                f"Amount Jo Pay Kiya (Rs) — Room {room}",
-                min_value=0, max_value=int(total)+10000,
+                f"💵 Kitna Amount Jama Karwaya? (Rs) — Room {room}",
+                min_value=1,
+                max_value=int(total),
                 value=int(total),
                 step=1,
-                key=f"amt_{room}_{idx}"
+                key=f"amt_{room}_{idx}",
+                help=f"Max: Rs {int(total)} — Total dues"
             )
 
             if uploaded_files:
@@ -349,7 +349,11 @@ if role == "Student":
                     save_payments(current_payments, hall)
 
                     if added:
-                        st.success(f"✅ {added} receipt(s) upload ho gayi! Amount: Rs {amount_paid}")
+                        remaining_after = int(total) - amount_paid
+                        if remaining_after > 0:
+                            st.success(f"✅ Receipt upload ho gayi! Paid: Rs {amount_paid} | Remaining: Rs {remaining_after}")
+                        else:
+                            st.success(f"✅ Receipt upload ho gayi! Full payment: Rs {amount_paid} ✔️")
                     for e in errors:
                         st.error(e)
 
@@ -425,8 +429,62 @@ elif role == "Hall Admin":
             existing = existing[keep_cols]
             df       = df[keep_cols]
 
+            # ===== AUTO CARRY FORWARD =====
+            # Pichle month ka remaining dhundo aur current upload mein add karo
+            all_dues     = load_dues(hall)
+            all_payments = load_payments(hall)
+
+            if not all_dues.empty and "Month" in all_dues.columns:
+                past_months = sorted([m for m in all_dues["Month"].unique() if m != month], reverse=True)
+
+                if past_months:
+                    last_month     = past_months[0]
+                    last_dues      = all_dues[all_dues["Month"] == last_month].copy()
+                    carry_map      = {}  # key: "RoomNo||Name" -> remaining amount
+
+                    for _, lrow in last_dues.iterrows():
+                        lroom = str(lrow["RoomNo"]).strip()
+                        lname = str(lrow["Name"]).strip()
+                        ltotal = float(lrow["Total"])
+                        lpaid  = 0.0
+
+                        if not all_payments.empty and "Amount_Paid" in all_payments.columns and "Month" in all_payments.columns:
+                            sp = all_payments[
+                                (all_payments["RoomNo"].astype(str).str.strip() == lroom) &
+                                (all_payments["Name"].astype(str).str.strip() == lname) &
+                                (all_payments["Month"] == last_month)
+                            ]
+                            lpaid = pd.to_numeric(sp["Amount_Paid"], errors="coerce").fillna(0).sum()
+
+                        remaining = max(0.0, ltotal - lpaid)
+                        if remaining > 0:
+                            carry_map[f"{lroom}||{lname}"] = remaining
+
+                    # Apply carry forward to new upload
+                    if carry_map:
+                        carried = 0
+                        for i, row2 in df.iterrows():
+                            key = f"{str(row2['RoomNo']).strip()}||{str(row2['Name']).strip()}"
+                            if key in carry_map:
+                                df.at[i, "Previous"] = float(df.at[i, "Previous"]) + carry_map[key]
+                                df.at[i, "Total"]    = float(df.at[i, "Food_Dues"]) + float(df.at[i, "Service_Charges"]) + float(df.at[i, "Previous"])
+                                carried += 1
+
+                        if carried:
+                            st.info(f"🔄 {carried} student(s) ka previous remaining carry forward ho gaya ({last_month} → {month})")
+
             final_df = pd.concat([existing, df], ignore_index=True)
             save_dues(final_df, hall)
+
+            # Jab naya month upload ho, us month ki purani payments bhi reset karo
+            existing_pays = load_payments(hall)
+            if not existing_pays.empty and "Month" in existing_pays.columns:
+                cleaned_pays = existing_pays[existing_pays["Month"] != month]
+                save_payments(cleaned_pays, hall)
+                removed = len(existing_pays) - len(cleaned_pays)
+                if removed > 0:
+                    st.info(f"ℹ️ '{month}' ki {removed} purani payment(s) bhi reset ho gayi (fresh upload)")
+
             st.success(f"✅ {len(df)} students ka data '{month}' ke liye upload ho gaya!")
 
     # -------- DASHBOARD --------
@@ -478,7 +536,22 @@ elif role == "Hall Admin":
                         return ["background-color: #fff9c4; color: #5d4037; font-weight:600"] * len(row)
                 return [""] * len(row)
 
-            display_cols = ["RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous", "Total"]
+            # Add Paid and Remaining columns to dashboard
+            def get_paid_for_row(row):
+                if not payments.empty and "Amount_Paid" in payments.columns and "Month" in payments.columns:
+                    sp = payments[
+                        (payments["RoomNo"].astype(str).str.strip() == str(row["RoomNo"]).strip()) &
+                        (payments["Name"].astype(str).str.strip() == str(row["Name"]).strip()) &
+                        (payments["Month"] == sel_month)
+                    ]
+                    return int(pd.to_numeric(sp["Amount_Paid"], errors="coerce").fillna(0).sum())
+                return 0
+
+            df = df.copy()
+            df["Paid (Rs)"]      = df.apply(get_paid_for_row, axis=1)
+            df["Remaining (Rs)"] = (df["Total"] - df["Paid (Rs)"]).clip(lower=0).astype(int)
+
+            display_cols = ["RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous", "Total", "Paid (Rs)", "Remaining (Rs)"]
             st.dataframe(
                 df[display_cols].style.apply(highlight_paid, axis=1),
                 use_container_width=True,
@@ -488,6 +561,19 @@ elif role == "Hall Admin":
             if not df.empty:
                 chart_df = df.set_index("RoomNo")[["Total"]].sort_index()
                 st.bar_chart(chart_df)
+
+            # Export monthly report
+            st.markdown("---")
+            st.subheader("📥 Monthly Report Export")
+            export_df = df[["RoomNo","Name","Food_Dues","Service_Charges","Previous","Total","Paid (Rs)","Remaining (Rs)"]].copy() if "Paid (Rs)" in df.columns else df.copy()
+            csv = export_df.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                label=f"⬇️ Download {sel_month} Report (CSV)",
+                data=csv,
+                file_name=f"{hall}_{sel_month}_report.csv",
+                mime="text/csv",
+                key="export_csv"
+            )
 
     # -------- PENDING --------
     with tab3:
@@ -521,8 +607,11 @@ elif role == "Hall Admin":
                 st.success("🎉 Sab students ne pay kar diya!")
             else:
                 st.warning(f"⚠️ {len(pending)} students abhi pending hain")
+                show_cols = ["RoomNo", "Name", "Total"]
+                if "Paid" in pending.columns:
+                    show_cols += ["Paid", "Remaining"]
                 st.dataframe(
-                    pending[["RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous", "Total"]],
+                    pending[show_cols],
                     use_container_width=True,
                     hide_index=True
                 )
@@ -582,6 +671,7 @@ elif role == "Hall Admin":
                         new_pay = pay_df[pay_df["Month"] != month_to_del]
                         save_payments(new_pay, hall)
                     st.success(f"✅ '{month_to_del}' ka dues + receipts dono delete ho gaye!")
+                    st.rerun()
             with col2:
                 st.info("💡 Update karne ke liye same month dobara Upload Dues tab se upload karo.")
 
@@ -665,6 +755,17 @@ elif role == "Senior Warden":
         st.subheader("📈 Hall-wise Collection Chart")
         chart_data = summary_df.set_index("Hall")[["Collected (Rs)", "Remaining (Rs)"]]
         st.bar_chart(chart_data)
+
+        st.markdown("---")
+        st.subheader("📥 Full Summary Export")
+        csv_w = summary_df.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label="⬇️ Download All Halls Summary (CSV)",
+            data=csv_w,
+            file_name="all_halls_summary.csv",
+            mime="text/csv",
+            key="warden_export"
+        )
 
     # ===== MANAGE ALL HALLS =====
     st.markdown("---")
