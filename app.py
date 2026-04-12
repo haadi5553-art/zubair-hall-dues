@@ -112,6 +112,21 @@ def standardize_columns(df):
 
 
 # ================= LOAD / SAVE DUES =================
+
+def find_worksheet(hall_name):
+    """Find worksheet by fuzzy name - ignores case and extra spaces."""
+    try:
+        sp = get_spreadsheet()
+        all_sheets = sp.worksheets()
+        hall_clean = hall_name.strip().lower().replace(" ", "")
+        for ws in all_sheets:
+            ws_clean = ws.title.strip().lower().replace(" ", "")
+            if ws_clean == hall_clean:
+                return ws
+        return None
+    except Exception:
+        return None
+
 def load_dues(hall):
     try:
         sheet = get_spreadsheet().worksheet(hall)
