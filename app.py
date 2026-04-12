@@ -100,7 +100,16 @@ def load_dues(hall):
     try:
         sheet = get_google_sheet().open("Hostel Dues Data").worksheet(hall)
         df = pd.DataFrame(sheet.get_all_records())
+
+        if df.empty:
+            return pd.DataFrame(columns=["Month","RoomNo","Name","Food_Dues","Service_Charges","Previous","Total"])
+
         df = standardize_columns(df)
+
+        # Ensure Month column exists
+        if "Month" not in df.columns:
+            df["Month"] = "Unknown"
+        df["Month"] = df["Month"].astype(str).str.strip()
 
         for col in ["Food_Dues", "Service_Charges", "Previous"]:
             df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
@@ -110,7 +119,7 @@ def load_dues(hall):
         df["Total"]  = df["Food_Dues"] + df["Service_Charges"] + df["Previous"]
 
         return df
-    except Exception:
+    except Exception as e:
         return pd.DataFrame(columns=["Month","RoomNo","Name","Food_Dues","Service_Charges","Previous","Total"])
 
 
