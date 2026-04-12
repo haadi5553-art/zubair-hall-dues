@@ -88,6 +88,10 @@ def standardize_columns(df):
     }
     df = df.rename(columns=column_map)
 
+    # Also map month column (lowercase)
+    if "month" in df.columns and "Month" not in df.columns:
+        df = df.rename(columns={"month": "Month"})
+
     for col in ["RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous"]:
         if col not in df.columns:
             df[col] = "" if col in ["RoomNo", "Name"] else 0
@@ -219,7 +223,10 @@ if role == "Student":
 
     month_dues = dues[dues["Month"] == selected_month].sort_values("RoomNo")
     payments = load_payments(hall)
-    paid_rooms = payments["RoomNo"].astype(str).str.strip().values if not payments.empty else []
+    if not payments.empty and "Month" in payments.columns:
+        paid_rooms = payments[payments["Month"] == selected_month]["RoomNo"].astype(str).str.strip().values
+    else:
+        paid_rooms = []
 
     st.subheader(f"📋 {hall} — {selected_month} — Sab Students ki Dues")
     st.markdown("---")
@@ -230,21 +237,25 @@ if role == "Student":
         total = row["Total"]
         is_paid = room in paid_rooms
 
-        card_class = "paid-card" if is_paid else "student-card"
+        # Card display using native Streamlit (no HTML issues)
+        bg = "#e8f5e9" if is_paid else "#f8f9fb"
+        border = "#388e3c" if is_paid else "#4CAF50"
+        paid_badge = "✅ PAID" if is_paid else "⏳ Unpaid"
+        paid_color = "green" if is_paid else "orange"
 
-        st.markdown(f"""
-        <div class="{card_class}">
-            <span style="font-size:1.05rem;">
-            🏠 <b>Room:</b> {room} &nbsp;&nbsp;|&nbsp;&nbsp;
-            👤 <b>Name:</b> {name} &nbsp;&nbsp;|&nbsp;&nbsp;
-            🍽️ Food: Rs {int(row['Food_Dues'])} &nbsp;
-            🔧 Service: Rs {int(row['Service_Charges'])} &nbsp;
-            📌 Previous: Rs {int(row['Previous'])} &nbsp;&nbsp;|&nbsp;&nbsp;
-            <b>💰 Total: Rs {int(total)}</b>
-            {"&nbsp;&nbsp;✅ <b style='color:green;'>PAID</b>" if is_paid else ""}
-            </span>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            f'''<div style="padding:14px 18px;background:{bg};border-left:5px solid {border};
+            border-radius:10px;margin-bottom:4px;box-shadow:0 2px 6px rgba(0,0,0,0.06);">
+            <b>🏠 Room: {room}</b> &nbsp;|&nbsp; 
+            <b>👤 {name}</b> &nbsp;|&nbsp;
+            🍽️ Food: Rs {int(row["Food_Dues"])} &nbsp;
+            🔧 Service: Rs {int(row["Service_Charges"])} &nbsp;
+            📌 Prev: Rs {int(row["Previous"])} &nbsp;|&nbsp;
+            <b>💰 Total: Rs {int(total)}</b> &nbsp;
+            <span style="color:{paid_color};font-weight:700;">{paid_badge}</span>
+            </div>''',
+            unsafe_allow_html=True
+        )
 
         with st.expander(f"📎 Receipt Upload — Room {room}"):
             uploaded_files = st.file_uploader(
@@ -354,7 +365,7 @@ elif role == "Hall Admin":
 
             df["RoomNo"] = df["RoomNo"].astype(str).str.strip()
             df["Name"]   = df["Name"].astype(str).str.strip()
-            df["Month"]  = month
+            df["Month"]  = month  # Always use admin-selected month (overwrite any existing)
             df["Total"]  = df["Food_Dues"] + df["Service_Charges"] + df["Previous"]
 
             # Keep only needed columns
@@ -428,8 +439,14 @@ elif role == "Hall Admin":
         if dues.empty:
             st.info("Koi data nahi.")
         else:
-            paid_rooms = payments["RoomNo"].astype(str).str.strip().unique() if not payments.empty else []
-            pending    = dues[~dues["RoomNo"].str.strip().isin(paid_rooms)].copy()
+            if not payments.empty and "Month" in payments.columns:
+                # Show pending for latest month
+                latest_month = sorted(dues["Month"].unique(), reverse=True)[0]
+                paid_rooms = payments[payments["Month"] == latest_month]["RoomNo"].astype(str).str.strip().unique()
+                pending = dues[dues["Month"] == latest_month][~dues[dues["Month"] == latest_month]["RoomNo"].str.strip().isin(paid_rooms)].copy()
+            else:
+                paid_rooms = []
+                pending = dues.copy()
 
             if pending.empty:
                 st.success("🎉 Sab students ne pay kar diya!")
@@ -519,6 +536,7 @@ elif role == "Senior Warden":
 
             if not hall_pay.empty:
                 paid_rooms = hall_pay["RoomNo"].astype(str).str.strip().unique()
+                # Match by RoomNo across all months (senior warden sees overall)
                 collected  = hall_dues[hall_dues["RoomNo"].str.strip().isin(paid_rooms)]["Total"].sum()
 
             remaining = total - collected
