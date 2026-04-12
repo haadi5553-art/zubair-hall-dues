@@ -345,6 +345,8 @@ elif role == "Hall Admin":
             else:
                 df = pd.read_excel(uploaded)
 
+            # Remove duplicate columns
+            df = df.loc[:, ~df.columns.duplicated()]
             df = standardize_columns(df)
 
             for col in ["Food_Dues", "Service_Charges", "Previous"]:
@@ -355,9 +357,23 @@ elif role == "Hall Admin":
             df["Month"]  = month
             df["Total"]  = df["Food_Dues"] + df["Service_Charges"] + df["Previous"]
 
+            # Keep only needed columns
+            keep_cols = ["Month", "RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous", "Total"]
+            df = df[[c for c in keep_cols if c in df.columns]]
+
             existing = load_dues(hall)
             if "Month" in existing.columns:
                 existing = existing[existing["Month"] != month]
+
+            # Align columns before concat
+            for c in keep_cols:
+                if c not in existing.columns:
+                    existing[c] = ""
+                if c not in df.columns:
+                    df[c] = ""
+
+            existing = existing[keep_cols]
+            df       = df[keep_cols]
 
             final_df = pd.concat([existing, df], ignore_index=True)
             save_dues(final_df, hall)
