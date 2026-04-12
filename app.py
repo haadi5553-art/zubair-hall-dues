@@ -159,7 +159,7 @@ def load_payments(hall):
         sheet = get_google_sheet().open("Hostel Dues Data").worksheet(f"{hall}_Payments")
         return pd.DataFrame(sheet.get_all_records())
     except Exception:
-        return pd.DataFrame(columns=["Month","RoomNo","Name","Submission_Date","Receipt_File","File_Hash"])
+        return pd.DataFrame(columns=["Month","RoomNo","Name","Amount_Paid","Submission_Date","Receipt_File","File_Hash"])
 
 
 def save_payments(df, hall):
@@ -224,9 +224,11 @@ if role == "Student":
     month_dues = dues[dues["Month"] == selected_month].sort_values("RoomNo")
     payments = load_payments(hall)
     if not payments.empty and "Month" in payments.columns:
-        paid_rooms = payments[payments["Month"] == selected_month]["RoomNo"].astype(str).str.strip().values
+        month_pays = payments[payments["Month"] == selected_month].copy()
+        month_pays["_key"] = month_pays["RoomNo"].astype(str).str.strip() + "||" + month_pays["Name"].astype(str).str.strip()
+        paid_keys = month_pays["_key"].values
     else:
-        paid_rooms = []
+        paid_keys = []
 
     st.subheader(f"📋 {hall} — {selected_month} — Sab Students ki Dues")
     st.markdown("---")
@@ -235,13 +237,35 @@ if role == "Student":
         room = str(row["RoomNo"]).strip()
         name = str(row["Name"]).strip()
         total = row["Total"]
-        is_paid = room in paid_rooms
+        student_key = room + "||" + name
+        is_paid = student_key in paid_keys
 
-        # Card display using native Streamlit (no HTML issues)
-        bg = "#e8f5e9" if is_paid else "#f8f9fb"
-        border = "#388e3c" if is_paid else "#4CAF50"
-        paid_badge = "✅ PAID" if is_paid else "⏳ Unpaid"
-        paid_color = "green" if is_paid else "orange"
+        # Calculate actual paid amount and remaining for this student+month
+        if not payments.empty and "Amount_Paid" in payments.columns and "Month" in payments.columns:
+            student_pays = payments[
+                (payments["RoomNo"].astype(str).str.strip() == room) &
+                (payments["Name"].astype(str).str.strip() == name) &
+                (payments["Month"] == selected_month)
+            ]
+            paid_amount = pd.to_numeric(student_pays["Amount_Paid"], errors="coerce").fillna(0).sum()
+        else:
+            paid_amount = 0
+
+        remaining_amount = max(0, total - paid_amount)
+        is_fully_paid  = paid_amount >= total
+        is_partial     = 0 < paid_amount < total
+
+        if is_fully_paid:
+            bg, border = "#e8f5e9", "#388e3c"
+            paid_badge, paid_color = "✅ FULLY PAID", "green"
+        elif is_partial:
+            bg, border = "#fff8e1", "#f9a825"
+            paid_badge, paid_color = f"⚠️ PARTIAL (Paid: Rs {int(paid_amount)} | Remaining: Rs {int(remaining_amount)})", "darkorange"
+        else:
+            bg, border = "#f8f9fb", "#4CAF50"
+            paid_badge, paid_color = "⏳ Unpaid", "orange"
+
+        is_paid = is_fully_paid  # for expander logic
 
         st.markdown(
             f'''<div style="padding:14px 18px;background:{bg};border-left:5px solid {border};
@@ -263,6 +287,13 @@ if role == "Student":
                 accept_multiple_files=True,
                 key=f"files_{room}_{idx}"
             )
+            amount_paid = st.number_input(
+                f"Amount Jo Pay Kiya (Rs) — Room {room}",
+                min_value=0, max_value=int(total)+10000,
+                value=int(total),
+                step=1,
+                key=f"amt_{room}_{idx}"
+            )
 
             if uploaded_files:
                 if st.button(f"✅ Submit Receipt(s) — Room {room}", key=f"submit_{room}_{idx}"):
@@ -276,18 +307,16 @@ if role == "Student":
                         now_str    = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         today_str  = datetime.now().strftime("%Y-%m-%d")
 
-                        # Duplicate check: same hash OR same room+month+today
-                        if not current_payments.empty:
+                        # Duplicate check: same hash + same student
+                        if not current_payments.empty and "File_Hash" in current_payments.columns:
                             dup = current_payments[
                                 (current_payments["RoomNo"].astype(str).str.strip() == room) &
+                                (current_payments["Name"].astype(str).str.strip() == name) &
                                 (current_payments["Month"] == selected_month) &
-                                (
-                                    (current_payments["File_Hash"] == file_hash) |
-                                    (current_payments["Submission_Date"].str[:10] == today_str)
-                                )
+                                (current_payments["File_Hash"] == file_hash)
                             ]
                             if not dup.empty:
-                                errors.append(f"❌ '{f.name}' — duplicate ya aaj already upload ho chuki hai!")
+                                errors.append(f"❌ '{f.name}' — same receipt pehle already upload ho chuki hai!")
                                 continue
 
                         # Save file
@@ -299,6 +328,7 @@ if role == "Student":
                             "Month":            selected_month,
                             "RoomNo":           room,
                             "Name":             name,
+                            "Amount_Paid":      amount_paid,
                             "Submission_Date":  now_str,
                             "Receipt_File":     save_path,
                             "File_Hash":        file_hash
@@ -310,7 +340,7 @@ if role == "Student":
                     save_payments(current_payments, hall)
 
                     if added:
-                        st.success(f"✅ {added} receipt(s) upload ho gayi!")
+                        st.success(f"✅ {added} receipt(s) upload ho gayi! Amount: Rs {amount_paid}")
                     for e in errors:
                         st.error(e)
 
@@ -409,8 +439,13 @@ elif role == "Hall Admin":
             paid_rooms = payments["RoomNo"].astype(str).str.strip().unique() if not payments.empty else []
 
             total_dues = df["Total"].sum()
-            paid_df    = df[df["RoomNo"].isin(paid_rooms)]
-            collected  = paid_df["Total"].sum()
+
+            # Collected = actual Amount_Paid sum for this month
+            if not payments.empty and "Amount_Paid" in payments.columns and "Month" in payments.columns:
+                month_pays = payments[payments["Month"] == sel_month]
+                collected  = pd.to_numeric(month_pays["Amount_Paid"], errors="coerce").fillna(0).sum()
+            else:
+                collected = 0
             remaining  = total_dues - collected
 
             c1, c2, c3 = st.columns(3)
@@ -419,8 +454,19 @@ elif role == "Hall Admin":
             c3.metric("⏳ Remaining",   f"Rs {int(remaining):,}")
 
             def highlight_paid(row):
-                if str(row["RoomNo"]).strip() in paid_rooms:
-                    return ["background-color: #c8e6c9; color: #1b5e20; font-weight:600"] * len(row)
+                room_no  = str(row["RoomNo"]).strip()
+                row_name = str(row["Name"]).strip()
+                if not payments.empty and "Amount_Paid" in payments.columns and "Month" in payments.columns:
+                    sp = payments[
+                        (payments["RoomNo"].astype(str).str.strip() == room_no) &
+                        (payments["Name"].astype(str).str.strip() == row_name) &
+                        (payments["Month"] == sel_month)
+                    ]
+                    paid_amt = pd.to_numeric(sp["Amount_Paid"], errors="coerce").fillna(0).sum()
+                    if paid_amt >= row["Total"]:
+                        return ["background-color: #c8e6c9; color: #1b5e20; font-weight:600"] * len(row)
+                    elif paid_amt > 0:
+                        return ["background-color: #fff9c4; color: #5d4037; font-weight:600"] * len(row)
                 return [""] * len(row)
 
             display_cols = ["RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous", "Total"]
@@ -440,13 +486,25 @@ elif role == "Hall Admin":
             st.info("Koi data nahi.")
         else:
             if not payments.empty and "Month" in payments.columns:
-                # Show pending for latest month
                 latest_month = sorted(dues["Month"].unique(), reverse=True)[0]
-                paid_rooms = payments[payments["Month"] == latest_month]["RoomNo"].astype(str).str.strip().unique()
-                pending = dues[dues["Month"] == latest_month][~dues[dues["Month"] == latest_month]["RoomNo"].str.strip().isin(paid_rooms)].copy()
+                month_p = payments[payments["Month"] == latest_month].copy()
+                month_p["_key"] = month_p["RoomNo"].astype(str).str.strip() + "||" + month_p["Name"].astype(str).str.strip()
+                paid_keys_pending = month_p["_key"].values
+                latest_dues = dues[dues["Month"] == latest_month].copy()
+                latest_dues["_key"] = latest_dues["RoomNo"].astype(str).str.strip() + "||" + latest_dues["Name"].astype(str).str.strip()
+
+                # Partial or unpaid = pending
+                def get_paid_amt(row):
+                    sp = month_p[month_p["_key"] == row["_key"]]
+                    return pd.to_numeric(sp["Amount_Paid"] if "Amount_Paid" in sp.columns else 0, errors="coerce").fillna(0).sum()
+
+                latest_dues["Paid"] = latest_dues.apply(get_paid_amt, axis=1)
+                latest_dues["Remaining"] = latest_dues["Total"] - latest_dues["Paid"]
+                pending = latest_dues[latest_dues["Remaining"] > 0].drop(columns=["_key"])
             else:
-                paid_rooms = []
                 pending = dues.copy()
+                pending["Paid"] = 0
+                pending["Remaining"] = pending["Total"]
 
             if pending.empty:
                 st.success("🎉 Sab students ne pay kar diya!")
@@ -534,9 +592,10 @@ elif role == "Senior Warden":
             total = hall_dues["Total"].sum()
             collected = 0
 
-            if not hall_pay.empty:
+            if not hall_pay.empty and "Amount_Paid" in hall_pay.columns:
+                collected = pd.to_numeric(hall_pay["Amount_Paid"], errors="coerce").fillna(0).sum()
+            elif not hall_pay.empty:
                 paid_rooms = hall_pay["RoomNo"].astype(str).str.strip().unique()
-                # Match by RoomNo across all months (senior warden sees overall)
                 collected  = hall_dues[hall_dues["RoomNo"].str.strip().isin(paid_rooms)]["Total"].sum()
 
             remaining = total - collected
