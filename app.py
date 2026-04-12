@@ -688,6 +688,27 @@ elif role == "Senior Warden":
 
     st.header("👨‍💼 Senior Warden Dashboard — Sab 9 Halls")
 
+    # Collect all available months across all halls
+    all_months = set()
+    for h in halls:
+        hd = load_dues(h)
+        if not hd.empty and "Month" in hd.columns:
+            for m in hd["Month"].unique():
+                if m and m != "Unknown":
+                    all_months.add(m)
+
+    all_months = sorted(all_months, reverse=True)
+
+    if all_months:
+        selected_w_month = st.selectbox(
+            "📅 Month Select Karo",
+            ["Sab Months (Combined)"] + all_months,
+            key="warden_month_filter"
+        )
+    else:
+        selected_w_month = "Sab Months (Combined)"
+        st.info("Abhi koi month data available nahi.")
+
     total_all = collected_all = remaining_all = 0
     summary = []
 
@@ -695,15 +716,29 @@ elif role == "Senior Warden":
         hall_dues = load_dues(hall)
         hall_pay  = load_payments(hall)
 
-        if not hall_dues.empty:
-            total = hall_dues["Total"].sum()
+        if not hall_dues.empty and "Month" in hall_dues.columns:
+            # Filter by month if selected
+            if selected_w_month != "Sab Months (Combined)":
+                hall_dues_f = hall_dues[hall_dues["Month"] == selected_w_month]
+                hall_pay_f  = hall_pay[hall_pay["Month"] == selected_w_month] if (not hall_pay.empty and "Month" in hall_pay.columns) else pd.DataFrame()
+            else:
+                hall_dues_f = hall_dues
+                hall_pay_f  = hall_pay
+
+            if hall_dues_f.empty:
+                summary.append({"Hall": hall, "Month": selected_w_month,
+                                 "Total (Rs)": 0, "Collected (Rs)": 0,
+                                 "Remaining (Rs)": 0, "Paid %": "0%"})
+                continue
+
+            total = hall_dues_f["Total"].sum()
             collected = 0
 
-            if not hall_pay.empty and "Amount_Paid" in hall_pay.columns:
-                collected = pd.to_numeric(hall_pay["Amount_Paid"], errors="coerce").fillna(0).sum()
-            elif not hall_pay.empty:
-                paid_rooms = hall_pay["RoomNo"].astype(str).str.strip().unique()
-                collected  = hall_dues[hall_dues["RoomNo"].str.strip().isin(paid_rooms)]["Total"].sum()
+            if not hall_pay_f.empty and "Amount_Paid" in hall_pay_f.columns:
+                collected = pd.to_numeric(hall_pay_f["Amount_Paid"], errors="coerce").fillna(0).sum()
+            elif not hall_pay_f.empty:
+                paid_rooms = hall_pay_f["RoomNo"].astype(str).str.strip().unique()
+                collected  = hall_dues_f[hall_dues_f["RoomNo"].str.strip().isin(paid_rooms)]["Total"].sum()
 
             remaining = total - collected
 
@@ -712,15 +747,17 @@ elif role == "Senior Warden":
             remaining_all += remaining
 
             summary.append({
-                "Hall":      hall,
+                "Hall":           hall,
+                "Month":          selected_w_month,
                 "Total (Rs)":     int(total),
                 "Collected (Rs)": int(collected),
                 "Remaining (Rs)": int(remaining),
-                "Paid %":  f"{int(collected/total*100) if total else 0}%"
+                "Paid %":         f"{int(collected/total*100) if total else 0}%"
             })
         else:
             summary.append({
                 "Hall":           hall,
+                "Month":          selected_w_month,
                 "Total (Rs)":     0,
                 "Collected (Rs)": 0,
                 "Remaining (Rs)": 0,
