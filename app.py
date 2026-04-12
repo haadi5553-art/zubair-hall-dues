@@ -114,6 +114,21 @@ def load_dues(hall):
         return pd.DataFrame(columns=["Month","RoomNo","Name","Food_Dues","Service_Charges","Previous","Total"])
 
 
+def clean_for_sheets(df):
+    """Convert all values to JSON-safe Python native types."""
+    import numpy as np
+    df = df.copy()
+    df = df.fillna("")
+    for col in df.columns:
+        df[col] = df[col].apply(
+            lambda x: int(x) if isinstance(x, (np.integer,)) else
+                      float(x) if isinstance(x, (np.floating,)) else
+                      bool(x) if isinstance(x, (np.bool_,)) else
+                      str(x) if not isinstance(x, (str, int, float, bool)) else x
+        )
+    return df
+
+
 def save_dues(df, hall):
     sh = get_google_sheet().open("Hostel Dues Data")
     try:
@@ -121,6 +136,7 @@ def save_dues(df, hall):
     except Exception:
         ws = sh.add_worksheet(title=hall, rows=5000, cols=20)
     ws.clear()
+    df = clean_for_sheets(df)
     ws.update([df.columns.values.tolist()] + df.values.tolist())
 
 
@@ -140,6 +156,7 @@ def save_payments(df, hall):
     except Exception:
         ws = sh.add_worksheet(title=f"{hall}_Payments", rows=5000, cols=20)
     ws.clear()
+    df = clean_for_sheets(df)
     ws.update([df.columns.values.tolist()] + df.values.tolist())
 
 
