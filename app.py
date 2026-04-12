@@ -816,36 +816,6 @@ elif role == "Senior Warden":
             mime="text/csv",
             key="warden_export"
         )
-
-    # ===== MANAGE ALL HALLS =====
-    st.markdown("---")
-    st.subheader("🗑️ Kisi Bhi Hall ka Month Delete Karo")
-
-    del_col1, del_col2 = st.columns(2)
-    with del_col1:
-        del_hall = st.selectbox("Hall Select Karo", halls, key="warden_del_hall")
-    with del_col2:
-        hall_dues_for_del = load_dues(del_hall)
-        if not hall_dues_for_del.empty and "Month" in hall_dues_for_del.columns:
-            available_months = sorted(hall_dues_for_del["Month"].unique(), reverse=True)
-            del_month = st.selectbox("Month Select Karo", available_months, key="warden_del_month")
-        else:
-            del_month = None
-            st.info("Is hall mein koi data nahi.")
-
-    if del_month:
-        st.warning(f"⚠️ {del_hall} — '{del_month}' ka dues + payments data delete hoga.")
-        if st.button("🗑️ Delete Karo", type="primary", key="warden_delete_btn"):
-            # Delete dues
-            new_dues = hall_dues_for_del[hall_dues_for_del["Month"] != del_month]
-            save_dues(new_dues, del_hall)
-            # Delete payments
-            hall_pay_for_del = load_payments(del_hall)
-            if not hall_pay_for_del.empty and "Month" in hall_pay_for_del.columns:
-                new_pay = hall_pay_for_del[hall_pay_for_del["Month"] != del_month]
-                save_payments(new_pay, del_hall)
-            st.success(f"✅ {del_hall} — '{del_month}' ka pura data delete ho gaya!")
-
     # ===== ALL HALLS PAYMENTS OVERVIEW =====
     st.markdown("---")
     st.subheader("📋 Sab Halls ki Payments Overview")
