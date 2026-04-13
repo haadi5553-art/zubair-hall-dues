@@ -1247,13 +1247,75 @@ elif role == "Hall Admin":
             col1, col2 = st.columns([1, 3])
             with col1:
                 if st.button("Delete Month", type="primary"):
-                    save_dues(dues[dues["Month"] != month_to_del], hall)
+                    # 1) Remove dues and payments for the deleted month
+                    updated_dues = dues[dues["Month"] != month_to_del].copy()
+                    updated_payments = payments[payments["Month"] != month_to_del].copy() \
+                        if (not payments.empty and "Month" in payments.columns) else payments
+
+                    # 2) Find the month immediately AFTER the deleted month (it may have carried arrears)
+                    all_remaining_months = sorted(updated_dues["Month"].unique())
+                    # next month = first month that is chronologically after month_to_del
+                    next_month = None
+                    for m in all_remaining_months:
+                        if m > month_to_del:
+                            next_month = m
+                            break
+
+                    # 3) If next month exists, zero out the Previous column for students
+                    #    whose previous arrear came from the deleted month, then recalculate Total
+                    if next_month is not None:
+                        nm_mask = updated_dues["Month"] == next_month
+                        nm_df   = updated_dues[nm_mask].copy()
+
+                        # The deleted month's dues (before deletion) — used to find who had arrears
+                        del_month_dues = dues[dues["Month"] == month_to_del].copy()
+
+                        for i, row in nm_df.iterrows():
+                            key_room = str(row["RoomNo"]).strip()
+                            key_name = str(row["Name"]).strip()
+
+                            # Check what this student's original dues were in deleted month
+                            match = del_month_dues[
+                                (del_month_dues["RoomNo"].astype(str).str.strip() == key_room) &
+                                (del_month_dues["Name"].astype(str).str.strip()   == key_name)
+                            ]
+                            if match.empty:
+                                continue
+
+                            del_total = float(match.iloc[0]["Total"])
+                            # How much did they pay in deleted month?
+                            del_paid = 0.0
+                            if not payments.empty and "Amount_Paid" in payments.columns and "Month" in payments.columns:
+                                sp = payments[
+                                    (payments["RoomNo"].astype(str).str.strip() == key_room) &
+                                    (payments["Name"].astype(str).str.strip()   == key_name) &
+                                    (payments["Month"] == month_to_del)
+                                ]
+                                del_paid = pd.to_numeric(sp["Amount_Paid"], errors="coerce").fillna(0).sum()
+
+                            arrear_carried = max(0.0, del_total - del_paid)
+
+                            # Subtract that carried arrear from Previous in next month
+                            current_prev = float(updated_dues.at[i, "Previous"])
+                            new_prev     = max(0.0, current_prev - arrear_carried)
+                            updated_dues.at[i, "Previous"] = new_prev
+                            updated_dues.at[i, "Total"]    = (
+                                float(updated_dues.at[i, "Food_Dues"]) +
+                                float(updated_dues.at[i, "Service_Charges"]) +
+                                new_prev
+                            )
+
+                    save_dues(updated_dues, hall)
                     if not payments.empty and "Month" in payments.columns:
-                        save_payments(payments[payments["Month"] != month_to_del], hall)
-                    st.success(f"All data for {month_to_del} has been deleted.")
+                        save_payments(updated_payments, hall)
+
+                    msg = f"All data for {month_to_del} deleted."
+                    if next_month:
+                        msg += f" Previous arrears in {next_month} have been recalculated."
+                    st.success(msg)
                     st.rerun()
             with col2:
-                st.info("To update a month's data, simply re-upload via the Upload Dues tab.")
+                st.info("Deleting a month will also remove its carried arrears from the next month's Previous column.")
 
 
 # ══════════════════════════════════════════════════════════════════
