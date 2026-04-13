@@ -28,7 +28,7 @@ html, body, [class*="css"] {
 }
 
 /* ── Page background ── */
-.stApp { background: #f8fafc; }
+.stApp { background: #f1f5f9; }
 .block-container { padding: 2rem 2.5rem 3rem !important; max-width: 1400px; }
 
 /* ── Sidebar ── */
@@ -317,9 +317,9 @@ hall_passwords = {
 senior_password = "senior@1122"
 
 STATUS_COLORS = {
-    "paid":    {"bg": "#f0fdf4", "border": "#22c55e", "badge_bg": "#16a34a", "text": "#14532d"},
-    "partial": {"bg": "#fff7ed", "border": "#f97316", "badge_bg": "#ea580c", "text": "#7c2d12"},
-    "unpaid":  {"bg": "#eff6ff", "border": "#3b82f6", "badge_bg": "#2563eb", "text": "#1e3a8a"},
+    "paid":    {"bg": "#f0fdf4", "border": "#16a34a", "badge_bg": "#15803d", "text": "#14532d"},
+    "partial": {"bg": "#eff6ff", "border": "#2563eb", "badge_bg": "#1d4ed8", "text": "#1e3a8a"},
+    "unpaid":  {"bg": "#fef2f2", "border": "#dc2626", "badge_bg": "#b91c1c", "text": "#7f1d1d"},
 }
 
 
@@ -345,15 +345,15 @@ def student_card(room, name, food, service, prev, total, paid_amount):
     if paid_amount >= total:
         s = STATUS_COLORS["paid"]
         badge = status_badge("PAID IN FULL", s["badge_bg"])
-        amount_line = f'<span style="color:#16a34a;font-weight:700;">Rs {int(total):,} — Fully Cleared</span>'
+        amount_line = f'<span style="color:#15803d;font-weight:700;">Rs {int(total):,} — Fully Cleared</span>'
     elif paid_amount > 0:
         s = STATUS_COLORS["partial"]
         badge = status_badge("PARTIAL PAYMENT", s["badge_bg"])
-        amount_line = f'<span style="color:#ea580c;font-weight:700;">Paid: Rs {int(paid_amount):,} &nbsp;·&nbsp; Remaining: Rs {int(remaining):,}</span>'
+        amount_line = f'<span style="color:#1d4ed8;font-weight:700;">Paid: Rs {int(paid_amount):,} &nbsp;·&nbsp; Remaining: Rs {int(remaining):,}</span>'
     else:
         s = STATUS_COLORS["unpaid"]
         badge = status_badge("UNPAID", s["badge_bg"])
-        amount_line = f'<span style="color:#2563eb;font-weight:700;">Rs {int(total):,} — Outstanding</span>'
+        amount_line = f'<span style="color:#b91c1c;font-weight:700;">Rs {int(total):,} — Outstanding</span>'
 
     initials = "".join([w[0].upper() for w in name.split()[:2]]) if name else "?"
     st.markdown(f"""
@@ -409,9 +409,9 @@ def hall_summary_card(hall_name, total, collected, remaining, pct_int):
     elif remaining == 0:
         accent, bg, pct_color = "#16a34a", "#f0fdf4", "#16a34a"
     elif collected > 0:
-        accent, bg, pct_color = "#f97316", "#fff7ed", "#ea580c"
+        accent, bg, pct_color = "#1d4ed8", "#eff6ff", "#1d4ed8"
     else:
-        accent, bg, pct_color = "#3b82f6", "#eff6ff", "#2563eb"
+        accent, bg, pct_color = "#dc2626", "#fef2f2", "#b91c1c"
 
     bar_width = min(100, pct_int)
     st.markdown(f"""
@@ -456,8 +456,13 @@ if AUTO_REFRESH:
     if rate_map[refresh_rate] > 0:
         st_autorefresh(interval=rate_map[refresh_rate], key="autorefresh")
 
-st.sidebar.markdown("---")
-st.sidebar.markdown('<p style="font-size:0.7rem;color:#475569;text-align:center;">Abdul Hadi · 2025 (S) CYS 90</p>', unsafe_allow_html=True)
+st.sidebar.markdown("""
+<div style="padding:12px 10px;margin-top:8px;border-top:1px solid #1e293b;text-align:center;">
+  <div style="font-size:0.78rem;font-weight:700;color:#e2e8f0;letter-spacing:0.02em;">Abdul Hadi</div>
+  <div style="font-size:0.68rem;color:#64748b;margin-top:2px;">2025 (S) &nbsp;·&nbsp; CYS 90</div>
+  <div style="font-size:0.65rem;color:#334155;margin-top:4px;font-style:italic;">Designed & Developed</div>
+</div>
+""", unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -737,8 +742,8 @@ elif role == "Hall Admin":
             def row_color(row):
                 s = row.get("Status","")
                 if s == "Paid":    return ["background-color:#f0fdf4;color:#14532d;font-weight:600"] * len(row)
-                elif s == "Partial": return ["background-color:#fff7ed;color:#7c2d12;font-weight:600"] * len(row)
-                return ["background-color:#eff6ff;color:#1e3a8a;font-weight:500"] * len(row)
+                elif s == "Partial": return ["background-color:#eff6ff;color:#1e3a8a;font-weight:600"] * len(row)
+                return ["background-color:#fef2f2;color:#7f1d1d;font-weight:500"] * len(row)
 
             display_cols = ["RoomNo","Name","Food_Dues","Service_Charges","Previous","Total","Paid (Rs)","Remaining (Rs)","Status"]
             st.dataframe(
@@ -1137,8 +1142,18 @@ elif role == "Senior Warden":
 
 # ── Footer ────────────────────────────────────────────────────────
 st.markdown("""
-<div style="margin-top:3rem;padding-top:1.5rem;border-top:1px solid #e2e8f0;
-            text-align:center;color:#94a3b8;font-size:0.75rem;">
-  University Mess Dues Management System &nbsp;·&nbsp; Abdul Hadi 2025 (S) CYS 90 &nbsp;·&nbsp; Powered by Streamlit & Google Sheets
+<div style="margin-top:3rem;padding:1.5rem 2rem;border-top:1px solid #e2e8f0;
+            background:#fff;border-radius:12px;
+            display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+  <div>
+    <span style="font-size:0.85rem;font-weight:700;color:#0f172a;">University Mess Dues System</span>
+    <span style="color:#cbd5e1;margin:0 8px;">|</span>
+    <span style="font-size:0.8rem;color:#64748b;">Powered by Streamlit &amp; Google Sheets</span>
+  </div>
+  <div style="text-align:right;">
+    <span style="font-size:0.8rem;font-weight:700;color:#1d4ed8;">Designed &amp; Developed by Abdul Hadi</span>
+    <br>
+    <span style="font-size:0.72rem;color:#94a3b8;">2025 (S) &nbsp;·&nbsp; CYS 90 &nbsp;·&nbsp; University of Engineering &amp; Technology</span>
+  </div>
 </div>
 """, unsafe_allow_html=True)
