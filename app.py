@@ -19,164 +19,509 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.markdown("""
+# ── Theme toggle in session state ─────────────────────────────────
+if "theme" not in st.session_state:
+    st.session_state["theme"] = "dark"
+
+# Sidebar toggle
+_t = st.session_state["theme"]
+
+st.markdown(f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif !important;
-}
+/* ═══════════════════════════════════════════
+   CSS CUSTOM PROPERTIES  (dark / light root)
+═══════════════════════════════════════════ */
+:root {{
+  --accent:       #6366f1;
+  --accent2:      #8b5cf6;
+  --accent3:      #06b6d4;
+  --green:        #10b981;
+  --red:          #f43f5e;
+  --yellow:       #f59e0b;
+  --radius-sm:    10px;
+  --radius-md:    14px;
+  --radius-lg:    20px;
+  --shadow-glow:  0 0 24px rgba(99,102,241,0.25);
+  --shadow-card:  0 4px 24px rgba(0,0,0,0.18);
 
-/* ── Page background ── */
-.stApp { background: #f1f5f9; }
-.block-container { padding: 2rem 2.5rem 3rem !important; max-width: 1400px; }
+  /* DARK theme vars */
+  {"" if _t=="dark" else "/*"}
+  --bg-base:      #09090f;
+  --bg-surface:   #111118;
+  --bg-card:      rgba(255,255,255,0.04);
+  --bg-card-hover:rgba(255,255,255,0.07);
+  --bg-sidebar:   #0c0c14;
+  --border:       rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.14);
+  --text-primary: #f1f5f9;
+  --text-secondary:#94a3b8;
+  --text-muted:   #475569;
+  --input-bg:     rgba(255,255,255,0.06);
+  --glass-bg:     rgba(255,255,255,0.05);
+  --glass-border: rgba(255,255,255,0.1);
+  {"" if _t=="dark" else "*/"}
 
-/* ── Sidebar ── */
-[data-testid="stSidebar"] {
-    background: #0f172a !important;
-    border-right: none !important;
-}
-[data-testid="stSidebar"] * { color: #e2e8f0 !important; }
-[data-testid="stSidebar"] .stSelectbox > div > div {
-    background: #1e293b !important;
-    border: 1px solid #334155 !important;
-    border-radius: 8px !important;
-    color: #e2e8f0 !important;
-}
-[data-testid="stSidebar"] .stTextInput > div > div > input {
-    background: #1e293b !important;
-    border: 1px solid #334155 !important;
-    border-radius: 8px !important;
-    color: #e2e8f0 !important;
-}
-[data-testid="stSidebar"] label { color: #94a3b8 !important; font-size: 0.75rem !important; font-weight: 600 !important; letter-spacing: 0.05em !important; text-transform: uppercase !important; }
+  /* LIGHT theme vars */
+  {"/*" if _t=="dark" else ""}
+  --bg-base:      #f0f4ff;
+  --bg-surface:   #e8eeff;
+  --bg-card:      rgba(255,255,255,0.85);
+  --bg-card-hover:rgba(255,255,255,0.95);
+  --bg-sidebar:   #1e1b4b;
+  --border:       rgba(99,102,241,0.12);
+  --border-strong:rgba(99,102,241,0.25);
+  --text-primary: #0f0a2e;
+  --text-secondary:#4338ca;
+  --text-muted:   #6366f1;
+  --input-bg:     rgba(255,255,255,0.9);
+  --glass-bg:     rgba(255,255,255,0.7);
+  --glass-border: rgba(99,102,241,0.2);
+  {"*/" if _t=="dark" else ""}
+}}
 
-/* ── Sidebar logo area ── */
-.sidebar-logo {
-    padding: 1.5rem 1rem 1rem;
-    border-bottom: 1px solid #1e293b;
-    margin-bottom: 1rem;
-}
-.sidebar-logo h2 { font-size: 1rem; font-weight: 700; color: #f1f5f9 !important; }
-.sidebar-logo p { font-size: 0.7rem; color: #64748b !important; margin-top: 2px; }
+/* ═══════════════════════════════════════════
+   BASE
+═══════════════════════════════════════════ */
+html, body, [class*="css"] {{
+  font-family: 'Inter', sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+}}
 
-/* ── Main buttons ── */
-.stButton > button {
-    background: #3b82f6 !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-    font-size: 0.85rem !important;
-    padding: 0.5rem 1.4rem !important;
-    letter-spacing: 0.01em !important;
-    transition: all 0.15s ease !important;
-}
-.stButton > button:hover { background: #2563eb !important; transform: translateY(-1px); }
-.stButton > button[kind="primary"] { background: #ef4444 !important; }
-.stButton > button[kind="primary"]:hover { background: #dc2626 !important; }
+.stApp {{
+  background: var(--bg-base) !important;
+  background-image: radial-gradient(ellipse 80% 50% at 20% -10%, rgba(99,102,241,0.15) 0%, transparent 60%),
+                    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(139,92,246,0.12) 0%, transparent 55%) !important;
+  background-attachment: fixed !important;
+}}
 
-/* ── Tabs ── */
-.stTabs [data-baseweb="tab-list"] {
-    background: #fff;
-    border-radius: 10px;
-    padding: 4px;
-    border: 1px solid #e2e8f0;
-    gap: 2px;
-}
-.stTabs [data-baseweb="tab"] {
-    border-radius: 7px !important;
-    font-weight: 500 !important;
-    font-size: 0.85rem !important;
-    color: #64748b !important;
-    padding: 0.45rem 1rem !important;
-}
-.stTabs [aria-selected="true"] {
-    background: #3b82f6 !important;
-    color: #ffffff !important;
-    font-weight: 600 !important;
-}
+.block-container {{
+  padding: 1.5rem 2rem 3rem !important;
+  max-width: 1440px !important;
+}}
 
-/* ── Metric cards ── */
-[data-testid="stMetricValue"] {
-    font-size: 2rem !important;
-    font-weight: 800 !important;
-    color: #0f172a !important;
-    letter-spacing: -0.04em !important;
-}
-[data-testid="stMetricLabel"] {
-    font-size: 0.75rem !important;
-    font-weight: 600 !important;
-    color: #64748b !important;
-    letter-spacing: 0.05em !important;
-    text-transform: uppercase !important;
-}
-[data-testid="stMetricDelta"] { font-size: 0.8rem !important; }
-[data-testid="metric-container"] {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 12px !important;
-    padding: 1.25rem 1.5rem !important;
-}
+/* ═══════════════════════════════════════════
+   ANIMATED TOP BORDER
+═══════════════════════════════════════════ */
+.stApp::before {{
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4, #10b981, #6366f1);
+  background-size: 300% 100%;
+  animation: shimmer 4s linear infinite;
+  z-index: 9999;
+}}
+@keyframes shimmer {{
+  0%   {{ background-position: 0% 0%; }}
+  100% {{ background-position: 300% 0%; }}
+}}
 
-/* ── Headings ── */
-h1 { font-size: 1.75rem !important; font-weight: 800 !important; color: #0f172a !important; letter-spacing: -0.03em !important; }
-h2 { font-size: 1.25rem !important; font-weight: 700 !important; color: #0f172a !important; }
-h3 { font-size: 1rem !important; font-weight: 600 !important; color: #334155 !important; }
+/* ═══════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════ */
+[data-testid="stSidebar"] {{
+  background: var(--bg-sidebar) !important;
+  border-right: 1px solid var(--glass-border) !important;
+  box-shadow: 4px 0 30px rgba(99,102,241,0.15) !important;
+}}
+[data-testid="stSidebar"] > div:first-child {{
+  background: transparent !important;
+}}
+[data-testid="stSidebar"] * {{ color: #e2e8f0 !important; }}
+[data-testid="stSidebar"] label {{
+  color: #6366f1 !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+}}
+[data-testid="stSidebar"] .stSelectbox > div > div {{
+  background: rgba(255,255,255,0.07) !important;
+  border: 1px solid rgba(99,102,241,0.3) !important;
+  border-radius: var(--radius-sm) !important;
+  color: #e2e8f0 !important;
+  backdrop-filter: blur(8px);
+}}
+[data-testid="stSidebar"] .stTextInput > div > div > input {{
+  background: rgba(255,255,255,0.07) !important;
+  border: 1px solid rgba(99,102,241,0.3) !important;
+  border-radius: var(--radius-sm) !important;
+  color: #e2e8f0 !important;
+}}
+[data-testid="stSidebar"] .stTextInput > div > div > input:focus {{
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.2) !important;
+}}
 
-/* ── Dataframe ── */
-[data-testid="stDataFrame"] { border-radius: 10px !important; overflow: hidden !important; border: 1px solid #e2e8f0 !important; }
-.dataframe thead th { background: #f8fafc !important; font-size: 0.78rem !important; font-weight: 700 !important; color: #374151 !important; text-transform: uppercase !important; letter-spacing: 0.04em !important; }
-.dataframe td { font-size: 0.88rem !important; color: #1e293b !important; padding: 10px 14px !important; }
+/* ═══════════════════════════════════════════
+   SIDEBAR LOGO
+═══════════════════════════════════════════ */
+.sidebar-logo {{
+  padding: 1.75rem 1.25rem 1.25rem;
+  border-bottom: 1px solid rgba(99,102,241,0.2);
+  margin-bottom: 1.25rem;
+  background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.05));
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}}
+.sidebar-logo h2 {{
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #f1f5f9 !important;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}}
+.sidebar-logo p {{
+  font-size: 0.68rem;
+  color: #6366f1 !important;
+  margin-top: 4px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}}
 
-/* ── Alerts ── */
-.stSuccess { border-radius: 8px !important; }
-.stWarning { border-radius: 8px !important; }
-.stInfo { border-radius: 8px !important; }
+/* ═══════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════ */
+.stButton > button {{
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+  font-weight: 700 !important;
+  font-size: 0.83rem !important;
+  padding: 0.55rem 1.5rem !important;
+  letter-spacing: 0.02em !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 4px 15px rgba(99,102,241,0.35) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}}
+.stButton > button::before {{
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transition: left 0.4s;
+}}
+.stButton > button:hover {{
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(99,102,241,0.5) !important;
+}}
+.stButton > button:hover::before {{ left: 100%; }}
+.stButton > button[kind="primary"] {{
+  background: linear-gradient(135deg, #f43f5e, #e11d48) !important;
+  box-shadow: 0 4px 15px rgba(244,63,94,0.35) !important;
+}}
+.stButton > button[kind="primary"]:hover {{
+  box-shadow: 0 8px 25px rgba(244,63,94,0.5) !important;
+}}
 
-/* ── Divider ── */
-hr { border-color: #e2e8f0 !important; }
+/* ═══════════════════════════════════════════
+   TABS
+═══════════════════════════════════════════ */
+.stTabs [data-baseweb="tab-list"] {{
+  background: var(--glass-bg) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 5px !important;
+  border: 1px solid var(--glass-border) !important;
+  gap: 3px !important;
+  backdrop-filter: blur(12px) !important;
+}}
+.stTabs [data-baseweb="tab"] {{
+  border-radius: var(--radius-sm) !important;
+  font-weight: 500 !important;
+  font-size: 0.84rem !important;
+  color: var(--text-secondary) !important;
+  padding: 0.45rem 1.1rem !important;
+  transition: all 0.2s !important;
+}}
+.stTabs [data-baseweb="tab"]:hover {{
+  background: var(--bg-card-hover) !important;
+  color: var(--text-primary) !important;
+}}
+.stTabs [aria-selected="true"] {{
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(99,102,241,0.4) !important;
+}}
 
-/* ── File uploader ── */
-[data-testid="stFileUploadDropzone"] {
-    border: 2px dashed #cbd5e1 !important;
-    border-radius: 10px !important;
-    background: #f8fafc !important;
-}
+/* ═══════════════════════════════════════════
+   METRIC CARDS
+═══════════════════════════════════════════ */
+[data-testid="metric-container"] {{
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 1.25rem 1.5rem !important;
+  backdrop-filter: blur(12px) !important;
+  transition: all 0.3s ease !important;
+  box-shadow: var(--shadow-card) !important;
+  position: relative;
+  overflow: hidden;
+}}
+[data-testid="metric-container"]::before {{
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  opacity: 0.7;
+}}
+[data-testid="metric-container"]:hover {{
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25), var(--shadow-glow) !important;
+  border-color: rgba(99,102,241,0.4) !important;
+}}
+[data-testid="stMetricValue"] {{
+  font-size: 1.9rem !important;
+  font-weight: 800 !important;
+  color: var(--text-primary) !important;
+  letter-spacing: -0.04em !important;
+  background: linear-gradient(135deg, var(--text-primary), #6366f1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}}
+[data-testid="stMetricLabel"] {{
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  color: var(--text-muted) !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+}}
+[data-testid="stMetricDelta"] {{
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+}}
 
-/* ── Expander ── */
-[data-testid="stExpander"] {
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 10px !important;
-    background: #fff !important;
-}
+/* ═══════════════════════════════════════════
+   HEADINGS
+═══════════════════════════════════════════ */
+h1 {{
+  font-size: 1.9rem !important;
+  font-weight: 900 !important;
+  color: var(--text-primary) !important;
+  letter-spacing: -0.04em !important;
+  background: linear-gradient(135deg, var(--text-primary) 60%, #6366f1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}}
+h2 {{
+  font-size: 1.2rem !important;
+  font-weight: 700 !important;
+  color: var(--text-primary) !important;
+}}
+h3 {{
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  color: var(--text-secondary) !important;
+}}
 
-/* ── Select box ── */
-.stSelectbox > div > div {
-    border-radius: 8px !important;
-    border: 1px solid #e2e8f0 !important;
-    font-size: 0.88rem !important;
-}
+/* ═══════════════════════════════════════════
+   DATAFRAME
+═══════════════════════════════════════════ */
+[data-testid="stDataFrame"] {{
+  border-radius: var(--radius-md) !important;
+  overflow: hidden !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--shadow-card) !important;
+}}
+.dataframe thead th {{
+  background: rgba(99,102,241,0.1) !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  color: #6366f1 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  padding: 12px 16px !important;
+}}
+.dataframe td {{
+  font-size: 0.87rem !important;
+  color: var(--text-primary) !important;
+  padding: 11px 16px !important;
+  border-bottom: 1px solid var(--border) !important;
+}}
 
-/* ── Number input ── */
-.stNumberInput > div > div > input {
-    border-radius: 8px !important;
-    border: 1px solid #e2e8f0 !important;
-}
+/* ═══════════════════════════════════════════
+   ALERTS
+═══════════════════════════════════════════ */
+.stSuccess, .stWarning, .stInfo, .stError {{
+  border-radius: var(--radius-sm) !important;
+  backdrop-filter: blur(8px) !important;
+  border-left-width: 4px !important;
+}}
 
-/* ── Caption ── */
-.stCaption { color: #94a3b8 !important; font-size: 0.75rem !important; }
+/* ═══════════════════════════════════════════
+   FORM INPUTS
+═══════════════════════════════════════════ */
+.stSelectbox > div > div {{
+  border-radius: var(--radius-sm) !important;
+  border: 1px solid var(--border-strong) !important;
+  background: var(--input-bg) !important;
+  font-size: 0.88rem !important;
+  color: var(--text-primary) !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}}
+.stSelectbox > div > div:focus-within {{
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.2) !important;
+}}
+.stNumberInput > div > div > input,
+.stTextInput > div > div > input {{
+  border-radius: var(--radius-sm) !important;
+  border: 1px solid var(--border-strong) !important;
+  background: var(--input-bg) !important;
+  color: var(--text-primary) !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}}
+.stNumberInput > div > div > input:focus,
+.stTextInput > div > div > input:focus {{
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.2) !important;
+}}
 
-/* ── Section header ── */
-.section-header {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #94a3b8;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 0.75rem;
-    margin-top: 0.25rem;
-}
+/* ═══════════════════════════════════════════
+   FILE UPLOADER
+═══════════════════════════════════════════ */
+[data-testid="stFileUploadDropzone"] {{
+  border: 2px dashed rgba(99,102,241,0.4) !important;
+  border-radius: var(--radius-md) !important;
+  background: rgba(99,102,241,0.04) !important;
+  transition: all 0.2s !important;
+}}
+[data-testid="stFileUploadDropzone"]:hover {{
+  border-color: #6366f1 !important;
+  background: rgba(99,102,241,0.08) !important;
+}}
+
+/* ═══════════════════════════════════════════
+   EXPANDER
+═══════════════════════════════════════════ */
+[data-testid="stExpander"] {{
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(8px) !important;
+  transition: all 0.2s !important;
+}}
+[data-testid="stExpander"]:hover {{
+  border-color: rgba(99,102,241,0.3) !important;
+}}
+
+/* ═══════════════════════════════════════════
+   SECTION HEADER
+═══════════════════════════════════════════ */
+.section-header {{
+  font-size: 0.67rem;
+  font-weight: 800;
+  color: #6366f1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}}
+.section-header::before {{
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 2px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 2px;
+}}
+
+/* ═══════════════════════════════════════════
+   DOWNLOAD BUTTON
+═══════════════════════════════════════════ */
+[data-testid="stDownloadButton"] > button {{
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  box-shadow: 0 4px 15px rgba(16,185,129,0.3) !important;
+}}
+[data-testid="stDownloadButton"] > button:hover {{
+  box-shadow: 0 8px 25px rgba(16,185,129,0.5) !important;
+}}
+
+/* ═══════════════════════════════════════════
+   DIVIDER
+═══════════════════════════════════════════ */
+hr {{
+  border: none !important;
+  height: 1px !important;
+  background: linear-gradient(90deg, transparent, var(--border-strong), transparent) !important;
+  margin: 1.5rem 0 !important;
+}}
+
+/* ═══════════════════════════════════════════
+   CAPTION / MISC
+═══════════════════════════════════════════ */
+.stCaption {{ color: var(--text-muted) !important; font-size: 0.73rem !important; }}
+
+/* ═══════════════════════════════════════════
+   PAGE HEADER GRADIENT PILL
+═══════════════════════════════════════════ */
+.page-header-wrap {{
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+}}
+.page-header-wrap::after {{
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, rgba(99,102,241,0.15), transparent 70%);
+  pointer-events: none;
+}}
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR (webkit)
+═══════════════════════════════════════════ */
+::-webkit-scrollbar {{ width: 6px; height: 6px; }}
+::-webkit-scrollbar-track {{ background: transparent; }}
+::-webkit-scrollbar-thumb {{ background: rgba(99,102,241,0.3); border-radius: 3px; }}
+::-webkit-scrollbar-thumb:hover {{ background: rgba(99,102,241,0.6); }}
+
+/* ═══════════════════════════════════════════
+   THEME TOGGLE BUTTON
+═══════════════════════════════════════════ */
+.theme-toggle-btn {{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(8px);
+}}
+
+/* ═══════════════════════════════════════════
+   AMOUNT HIGHLIGHT
+═══════════════════════════════════════════ */
+.amt-positive {{ color: #10b981 !important; font-variant-numeric: tabular-nums; }}
+.amt-negative {{ color: #f43f5e !important; font-variant-numeric: tabular-nums; }}
+.amt-neutral  {{ color: #6366f1 !important; font-variant-numeric: tabular-nums; }}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -317,9 +662,9 @@ hall_passwords = {
 senior_password = "senior@1122"
 
 STATUS_COLORS = {
-    "paid":    {"bg": "#f0fdf4", "border": "#16a34a", "badge_bg": "#15803d", "text": "#14532d"},
-    "partial": {"bg": "#eff6ff", "border": "#2563eb", "badge_bg": "#1d4ed8", "text": "#1e3a8a"},
-    "unpaid":  {"bg": "#fef2f2", "border": "#dc2626", "badge_bg": "#b91c1c", "text": "#7f1d1d"},
+    "paid":    {"bg": "rgba(16,185,129,0.08)",  "border": "#10b981", "badge_bg": "#10b981", "text": "#10b981"},
+    "partial": {"bg": "rgba(99,102,241,0.08)",  "border": "#6366f1", "badge_bg": "#6366f1", "text": "#6366f1"},
+    "unpaid":  {"bg": "rgba(244,63,94,0.08)",   "border": "#f43f5e", "badge_bg": "#f43f5e", "text": "#f43f5e"},
 }
 
 
@@ -327,12 +672,19 @@ STATUS_COLORS = {
 # UI COMPONENTS
 # ══════════════════════════════════════════════════════════════════
 def page_header(title, subtitle=""):
+    theme_icon = "☀️" if st.session_state.get("theme","dark") == "dark" else "🌙"
+    theme_label = "Light Mode" if st.session_state.get("theme","dark") == "dark" else "Dark Mode"
     st.markdown(f"""
-<div style="margin-bottom:2rem;">
+<div class="page-header-wrap">
   <h1 style="margin:0;padding:0;">{title}</h1>
-  {"" if not subtitle else f'<p style="color:#64748b;margin:4px 0 0;font-size:0.9rem;">{subtitle}</p>'}
+  {"" if not subtitle else f'<p style="color:var(--text-secondary);margin:6px 0 0;font-size:0.88rem;font-weight:500;">{subtitle}</p>'}
 </div>
 """, unsafe_allow_html=True)
+    _c1, _c2 = st.columns([8, 1])
+    with _c2:
+        if st.button(f"{theme_icon} {theme_label}", key="theme_toggle_btn"):
+            st.session_state["theme"] = "light" if st.session_state.get("theme","dark") == "dark" else "dark"
+            st.rerun()
 
 def section_label(text):
     st.markdown(f'<p class="section-header">{text}</p>', unsafe_allow_html=True)
@@ -342,97 +694,145 @@ def status_badge(label, color):
 
 def student_card(room, name, food, service, prev, total, paid_amount):
     remaining = max(0.0, total - paid_amount)
+    _t = st.session_state.get("theme","dark")
     if paid_amount >= total:
-        s = STATUS_COLORS["paid"]
-        badge = status_badge("PAID IN FULL", s["badge_bg"])
-        amount_line = f'<span style="color:#15803d;font-weight:700;">Rs {int(total):,} — Fully Cleared</span>'
+        accent      = "#10b981"
+        glow        = "rgba(16,185,129,0.18)"
+        border_col  = "rgba(16,185,129,0.35)"
+        badge_bg    = "linear-gradient(135deg,#10b981,#059669)"
+        badge_txt   = "✓ PAID IN FULL"
+        amount_html = f'<span style="color:#10b981;font-weight:800;font-size:1rem;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(total):,} — Cleared</span>'
     elif paid_amount > 0:
-        s = STATUS_COLORS["partial"]
-        badge = status_badge("PARTIAL PAYMENT", s["badge_bg"])
-        amount_line = f'<span style="color:#1d4ed8;font-weight:700;">Paid: Rs {int(paid_amount):,} &nbsp;·&nbsp; Remaining: Rs {int(remaining):,}</span>'
+        accent      = "#6366f1"
+        glow        = "rgba(99,102,241,0.18)"
+        border_col  = "rgba(99,102,241,0.35)"
+        badge_bg    = "linear-gradient(135deg,#6366f1,#8b5cf6)"
+        badge_txt   = "◑ PARTIAL"
+        amount_html = f'<span style="color:#6366f1;font-weight:800;font-size:1rem;font-variant-numeric:tabular-nums;">Paid: Rs&nbsp;{int(paid_amount):,} &nbsp;<span style="color:#94a3b8;font-weight:400;">·</span>&nbsp; Due: Rs&nbsp;{int(remaining):,}</span>'
     else:
-        s = STATUS_COLORS["unpaid"]
-        badge = status_badge("UNPAID", s["badge_bg"])
-        amount_line = f'<span style="color:#b91c1c;font-weight:700;">Rs {int(total):,} — Outstanding</span>'
+        accent      = "#f43f5e"
+        glow        = "rgba(244,63,94,0.18)"
+        border_col  = "rgba(244,63,94,0.35)"
+        badge_bg    = "linear-gradient(135deg,#f43f5e,#e11d48)"
+        badge_txt   = "✗ UNPAID"
+        amount_html = f'<span style="color:#f43f5e;font-weight:800;font-size:1rem;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(total):,} — Outstanding</span>'
 
     initials = "".join([w[0].upper() for w in name.split()[:2]]) if name else "?"
+    pct = int(paid_amount / total * 100) if total else 0
+    bar_w = min(100, pct)
+
     st.markdown(f"""
-<div style="background:{s['bg']};border:1px solid {s['border']};border-radius:12px;
-            padding:16px 20px;margin-bottom:10px;transition:all 0.2s;">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+<div style="background:var(--glass-bg);border:1px solid {border_col};border-radius:16px;
+            padding:18px 22px;margin-bottom:10px;
+            backdrop-filter:blur(12px);
+            box-shadow:0 4px 24px {glow},0 1px 3px rgba(0,0,0,0.1);
+            transition:all 0.25s ease;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;">
     <div style="display:flex;align-items:center;gap:14px;">
-      <div style="width:42px;height:42px;border-radius:10px;background:{s['border']};
+      <div style="width:46px;height:46px;border-radius:12px;
+                  background:{badge_bg};
                   display:flex;align-items:center;justify-content:center;
-                  font-size:14px;font-weight:800;color:#fff;flex-shrink:0;">{initials}</div>
+                  font-size:15px;font-weight:900;color:#fff;flex-shrink:0;
+                  box-shadow:0 4px 12px {glow};">{initials}</div>
       <div>
-        <div style="font-size:1rem;font-weight:700;color:#0f172a;">{name}</div>
-        <div style="font-size:0.8rem;color:#64748b;margin-top:1px;">Room {room}</div>
+        <div style="font-size:1rem;font-weight:700;color:var(--text-primary);letter-spacing:-0.01em;">{name}</div>
+        <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:2px;">Room&nbsp;<strong style="color:{accent};">{room}</strong></div>
       </div>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-      {badge}
-      {amount_line}
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+      <span style="background:{badge_bg};color:#fff;padding:4px 12px;border-radius:999px;
+                   font-size:0.7rem;font-weight:800;letter-spacing:0.06em;
+                   box-shadow:0 2px 8px {glow};">{badge_txt}</span>
+      {amount_html}
     </div>
   </div>
-  <div style="margin-top:12px;padding-top:12px;border-top:1px solid {s['border']};
-              display:flex;gap:20px;flex-wrap:wrap;">
-    <span style="font-size:0.8rem;color:#64748b;">Food Dues <strong style="color:#0f172a;">Rs {int(food):,}</strong></span>
-    <span style="font-size:0.8rem;color:#64748b;">Service <strong style="color:#0f172a;">Rs {int(service):,}</strong></span>
-    <span style="font-size:0.8rem;color:#64748b;">Previous <strong style="color:#0f172a;">Rs {int(prev):,}</strong></span>
-    <span style="font-size:0.8rem;color:#64748b;">Total <strong style="color:#0f172a;font-size:0.95rem;">Rs {int(total):,}</strong></span>
+  <div style="margin-top:14px;">
+    <div style="background:rgba(255,255,255,0.08);border-radius:999px;height:4px;overflow:hidden;margin-bottom:12px;">
+      <div style="background:{badge_bg};height:4px;width:{bar_w}%;border-radius:999px;
+                  box-shadow:0 0 8px {glow};transition:width 0.5s ease;"></div>
+    </div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;">
+      <span style="font-size:0.78rem;color:var(--text-muted);">Food Dues <strong style="color:var(--text-primary);font-variant-numeric:tabular-nums;">Rs&nbsp;{int(food):,}</strong></span>
+      <span style="font-size:0.78rem;color:var(--text-muted);">Service <strong style="color:var(--text-primary);font-variant-numeric:tabular-nums;">Rs&nbsp;{int(service):,}</strong></span>
+      <span style="font-size:0.78rem;color:var(--text-muted);">Previous <strong style="color:var(--text-primary);font-variant-numeric:tabular-nums;">Rs&nbsp;{int(prev):,}</strong></span>
+      <span style="font-size:0.78rem;color:var(--text-muted);">Total <strong style="color:{accent};font-size:0.9rem;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(total):,}</strong></span>
+    </div>
   </div>
 </div>
 """, unsafe_allow_html=True)
 
 def receipt_card(room, name, amount, date, idx):
     initials = "".join([w[0].upper() for w in name.split()[:2]]) if name else "?"
+    amt_fmt = f"Rs\u00a0{int(float(amount)):,}" if amount else "Rs\u00a00"
     st.markdown(f"""
-<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
+<div style="background:var(--glass-bg);border:1px solid rgba(16,185,129,0.25);border-radius:14px;
             padding:14px 18px;margin-bottom:8px;display:flex;
-            justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+            backdrop-filter:blur(10px);
+            box-shadow:0 2px 12px rgba(16,185,129,0.1);transition:all 0.2s;">
   <div style="display:flex;align-items:center;gap:12px;">
-    <div style="width:38px;height:38px;border-radius:9px;background:#dbeafe;
+    <div style="width:40px;height:40px;border-radius:10px;
+                background:linear-gradient(135deg,#10b981,#059669);
                 display:flex;align-items:center;justify-content:center;
-                font-size:12px;font-weight:800;color:#1d4ed8;">{initials}</div>
+                font-size:13px;font-weight:800;color:#fff;
+                box-shadow:0 4px 10px rgba(16,185,129,0.3);">{initials}</div>
     <div>
-      <div style="font-size:0.9rem;font-weight:700;color:#0f172a;">{name}</div>
-      <div style="font-size:0.78rem;color:#64748b;">Room {room} &nbsp;·&nbsp; {date}</div>
+      <div style="font-size:0.92rem;font-weight:700;color:var(--text-primary);">{name}</div>
+      <div style="font-size:0.76rem;color:var(--text-secondary);margin-top:1px;">
+        Room&nbsp;<strong style="color:#6366f1;">{room}</strong>
+        &nbsp;·&nbsp;
+        <span style="color:var(--text-muted);">{date}</span>
+      </div>
     </div>
   </div>
-  <div style="font-size:1.1rem;font-weight:800;color:#16a34a;">Rs {int(float(amount)) if amount else 0:,}</div>
+  <div style="font-size:1.15rem;font-weight:900;
+              background:linear-gradient(135deg,#10b981,#059669);
+              -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+              background-clip:text;font-variant-numeric:tabular-nums;">{amt_fmt}</div>
 </div>
 """, unsafe_allow_html=True)
 
 def hall_summary_card(hall_name, total, collected, remaining, pct_int):
     if total == 0:
-        accent, bg, pct_color = "#94a3b8", "#f8fafc", "#94a3b8"
+        accent, glow, badge_bg = "#94a3b8", "rgba(148,163,184,0.1)", "linear-gradient(135deg,#94a3b8,#64748b)"
     elif remaining == 0:
-        accent, bg, pct_color = "#16a34a", "#f0fdf4", "#16a34a"
+        accent, glow, badge_bg = "#10b981", "rgba(16,185,129,0.15)", "linear-gradient(135deg,#10b981,#059669)"
     elif collected > 0:
-        accent, bg, pct_color = "#1d4ed8", "#eff6ff", "#1d4ed8"
+        accent, glow, badge_bg = "#6366f1", "rgba(99,102,241,0.15)", "linear-gradient(135deg,#6366f1,#8b5cf6)"
     else:
-        accent, bg, pct_color = "#dc2626", "#fef2f2", "#b91c1c"
+        accent, glow, badge_bg = "#f43f5e", "rgba(244,63,94,0.15)", "linear-gradient(135deg,#f43f5e,#e11d48)"
 
     bar_width = min(100, pct_int)
     st.markdown(f"""
-<div style="background:{bg};border:1px solid #e2e8f0;border-radius:14px;
-            padding:18px 22px;margin-bottom:10px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+<div style="background:var(--glass-bg);border:1px solid rgba(255,255,255,0.08);
+            border-left:3px solid {accent};
+            border-radius:16px;padding:18px 22px;margin-bottom:10px;
+            backdrop-filter:blur(12px);
+            box-shadow:0 4px 20px {glow};transition:all 0.25s ease;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
     <div>
-      <div style="font-size:1rem;font-weight:700;color:#0f172a;">{hall_name}</div>
-      <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">Total Outstanding: Rs {total:,}</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--text-primary);">{hall_name}</div>
+      <div style="font-size:0.76rem;color:var(--text-secondary);margin-top:3px;">
+        Total Outstanding: <strong style="color:var(--text-primary);font-variant-numeric:tabular-nums;">Rs&nbsp;{total:,}</strong>
+      </div>
     </div>
     <div style="text-align:right;">
-      <div style="font-size:1.5rem;font-weight:800;color:{pct_color};">{pct_int}%</div>
-      <div style="font-size:0.72rem;color:#94a3b8;font-weight:500;">COLLECTED</div>
+      <div style="font-size:1.6rem;font-weight:900;
+                  background:{badge_bg};
+                  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                  background-clip:text;font-variant-numeric:tabular-nums;">{pct_int}%</div>
+      <div style="font-size:0.68rem;color:var(--text-muted);font-weight:700;letter-spacing:0.08em;">COLLECTED</div>
     </div>
   </div>
-  <div style="background:#e2e8f0;border-radius:999px;height:6px;overflow:hidden;margin-bottom:12px;">
-    <div style="background:{accent};height:6px;width:{bar_width}%;border-radius:999px;transition:width 0.4s;"></div>
+  <div style="background:rgba(255,255,255,0.07);border-radius:999px;height:6px;overflow:hidden;margin-bottom:14px;">
+    <div style="background:{badge_bg};height:6px;width:{bar_width}%;border-radius:999px;
+                box-shadow:0 0 10px {glow};transition:width 0.5s ease;"></div>
   </div>
-  <div style="display:flex;gap:20px;flex-wrap:wrap;">
-    <span style="font-size:0.8rem;color:#64748b;">Collected <strong style="color:#16a34a;">Rs {collected:,}</strong></span>
-    <span style="font-size:0.8rem;color:#64748b;">Remaining <strong style="color:#dc2626;">Rs {remaining:,}</strong></span>
+  <div style="display:flex;gap:24px;flex-wrap:wrap;">
+    <span style="font-size:0.79rem;color:var(--text-muted);">Collected&nbsp;
+      <strong style="color:#10b981;font-variant-numeric:tabular-nums;">Rs&nbsp;{collected:,}</strong></span>
+    <span style="font-size:0.79rem;color:var(--text-muted);">Remaining&nbsp;
+      <strong style="color:#f43f5e;font-variant-numeric:tabular-nums;">Rs&nbsp;{remaining:,}</strong></span>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -443,7 +843,7 @@ def hall_summary_card(hall_name, total, collected, remaining, pct_int):
 # ══════════════════════════════════════════════════════════════════
 st.sidebar.markdown("""
 <div class="sidebar-logo">
-  <h2>🏛️ Mess Dues System</h2>
+  <h2>⬡ Mess Dues System</h2>
   <p>University Hostel Management</p>
 </div>
 """, unsafe_allow_html=True)
@@ -457,10 +857,12 @@ if AUTO_REFRESH:
         st_autorefresh(interval=rate_map[refresh_rate], key="autorefresh")
 
 st.sidebar.markdown("""
-<div style="padding:12px 10px;margin-top:8px;border-top:1px solid #1e293b;text-align:center;">
-  <div style="font-size:0.78rem;font-weight:700;color:#e2e8f0;letter-spacing:0.02em;">Abdul Hadi</div>
-  <div style="font-size:0.68rem;color:#64748b;margin-top:2px;">2025 (S) &nbsp;·&nbsp; CYS 90</div>
-  <div style="font-size:0.65rem;color:#334155;margin-top:4px;font-style:italic;">Designed & Developed</div>
+<div style="padding:14px 12px;margin-top:10px;border-top:1px solid rgba(99,102,241,0.2);text-align:center;
+            background:linear-gradient(135deg,rgba(99,102,241,0.06),rgba(139,92,246,0.04));
+            border-radius:0 0 8px 8px;">
+  <div style="font-size:0.82rem;font-weight:800;color:#e2e8f0;letter-spacing:0.01em;">Abdul Hadi</div>
+  <div style="font-size:0.68rem;color:#6366f1;margin-top:3px;font-weight:600;">2025 (S) &nbsp;·&nbsp; CYS 90</div>
+  <div style="font-size:0.63rem;color:#475569;margin-top:4px;font-style:italic;letter-spacing:0.03em;">Designed &amp; Developed</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -741,9 +1143,11 @@ elif role == "Hall Admin":
 
             def row_color(row):
                 s = row.get("Status","")
-                if s == "Paid":    return ["background-color:#f0fdf4;color:#14532d;font-weight:600"] * len(row)
-                elif s == "Partial": return ["background-color:#eff6ff;color:#1e3a8a;font-weight:600"] * len(row)
-                return ["background-color:#fef2f2;color:#7f1d1d;font-weight:500"] * len(row)
+                if s == "Paid":
+                    return ["background-color:rgba(16,185,129,0.12);color:#10b981;font-weight:700"] * len(row)
+                elif s == "Partial":
+                    return ["background-color:rgba(99,102,241,0.12);color:#818cf8;font-weight:600"] * len(row)
+                return ["background-color:rgba(244,63,94,0.10);color:#fb7185;font-weight:500"] * len(row)
 
             display_cols = ["RoomNo","Name","Food_Dues","Service_Charges","Previous","Total","Paid (Rs)","Remaining (Rs)","Status"]
             st.dataframe(
@@ -963,23 +1367,23 @@ elif role == "Senior Warden":
             fig_pie = go.Figure(data=[go.Pie(
                 labels=labels,
                 values=values,
-                hole=0.55,
-                marker=dict(colors=colors, line=dict(color="#ffffff", width=2)),
+                hole=0.58,
+                marker=dict(colors=["#10b981","#f43f5e"], line=dict(color="rgba(0,0,0,0)", width=0)),
                 textinfo="percent",
-                textfont=dict(size=13, family="Inter, sans-serif"),
+                textfont=dict(size=13, family="Inter, sans-serif", color="#ffffff"),
                 hovertemplate="<b>%{label}</b><br>Rs %{value:,.0f}<extra></extra>"
             )])
             fig_pie.update_layout(
                 showlegend=True,
                 legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5,
-                            font=dict(size=12, family="Inter, sans-serif")),
+                            font=dict(size=12, family="Inter, sans-serif", color="#94a3b8")),
                 margin=dict(t=10, b=10, l=10, r=10),
                 height=260,
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 annotations=[dict(
-                    text=f"<b>{overall_pct}%</b><br><span style='font-size:11px'>Recovered</span>",
-                    x=0.5, y=0.5, font_size=16, font_family="Inter, sans-serif",
+                    text=f"<b>{overall_pct}%</b><br><span style='font-size:11px;color:#94a3b8'>Recovered</span>",
+                    x=0.5, y=0.5, font_size=18, font_family="Inter, sans-serif", font_color="#f1f5f9",
                     showarrow=False
                 )]
             )
@@ -999,26 +1403,28 @@ elif role == "Senior Warden":
             fig_bar = go.Figure()
             fig_bar.add_trace(go.Bar(
                 name="Collected", x=hall_names, y=collected_vals,
-                marker_color="#22c55e",
+                marker_color="#10b981",
+                marker_line_width=0,
                 hovertemplate="<b>%{x}</b><br>Collected: Rs %{y:,.0f}<extra></extra>"
             ))
             fig_bar.add_trace(go.Bar(
                 name="Remaining", x=hall_names, y=remaining_vals,
-                marker_color="#f87171",
+                marker_color="#f43f5e",
+                marker_line_width=0,
                 hovertemplate="<b>%{x}</b><br>Remaining: Rs %{y:,.0f}<extra></extra>"
             ))
             fig_bar.update_layout(
                 barmode="stack",
                 showlegend=True,
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1,
-                            font=dict(size=11, family="Inter, sans-serif")),
+                            font=dict(size=11, family="Inter, sans-serif", color="#94a3b8")),
                 margin=dict(t=30, b=10, l=10, r=10),
                 height=260,
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
-                xaxis=dict(showgrid=False, tickfont=dict(size=11, family="Inter, sans-serif")),
-                yaxis=dict(showgrid=True, gridcolor="#f1f5f9",
-                           tickformat=",", tickfont=dict(size=10, family="Inter, sans-serif")),
+                xaxis=dict(showgrid=False, tickfont=dict(size=11, family="Inter, sans-serif", color="#94a3b8")),
+                yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.05)",
+                           tickformat=",", tickfont=dict(size=10, family="Inter, sans-serif", color="#94a3b8")),
             )
             st.plotly_chart(fig_bar, use_container_width=True, config={"displayModeBar": False})
         except ImportError:
@@ -1036,23 +1442,23 @@ elif role == "Senior Warden":
             fig_d = go.Figure(data=[go.Pie(
                 labels=["Paid", "Pending"],
                 values=[paid_students_all, unpaid_students_all],
-                hole=0.6,
-                marker=dict(colors=["#3b82f6","#f59e0b"], line=dict(color="#ffffff", width=2)),
+                hole=0.62,
+                marker=dict(colors=["#6366f1","#f59e0b"], line=dict(color="rgba(0,0,0,0)", width=0)),
                 textinfo="percent+value",
-                textfont=dict(size=12, family="Inter, sans-serif"),
+                textfont=dict(size=12, family="Inter, sans-serif", color="#ffffff"),
                 hovertemplate="<b>%{label}</b><br>%{value} students<extra></extra>"
             )])
             fig_d.update_layout(
                 showlegend=True,
                 legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5,
-                            font=dict(size=12, family="Inter, sans-serif")),
+                            font=dict(size=12, family="Inter, sans-serif", color="#94a3b8")),
                 margin=dict(t=10, b=10, l=10, r=10),
                 height=240,
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 annotations=[dict(
-                    text=f"<b>{total_students_all}</b><br><span>students</span>",
-                    x=0.5, y=0.5, font_size=14, font_family="Inter, sans-serif", showarrow=False
+                    text=f"<b style='font-size:18px'>{total_students_all}</b><br><span style='color:#94a3b8;font-size:11px'>students</span>",
+                    x=0.5, y=0.5, font_size=14, font_family="Inter, sans-serif", font_color="#f1f5f9", showarrow=False
                 )]
             )
             st.plotly_chart(fig_d, use_container_width=True, config={"displayModeBar": False})
@@ -1065,12 +1471,13 @@ elif role == "Senior Warden":
                 x=hall_pcts, y=hall_labels, orientation="h",
                 marker=dict(
                     color=hall_pcts,
-                    colorscale=[[0,"#f87171"],[0.5,"#fbbf24"],[1,"#22c55e"]],
-                    showscale=False
+                    colorscale=[[0,"#f43f5e"],[0.5,"#f59e0b"],[1,"#10b981"]],
+                    showscale=False,
+                    line=dict(width=0),
                 ),
                 text=[f"{p}%" for p in hall_pcts],
                 textposition="outside",
-                textfont=dict(size=11, family="Inter, sans-serif"),
+                textfont=dict(size=11, family="Inter, sans-serif", color="#94a3b8"),
                 hovertemplate="<b>%{y}</b><br>Recovery: %{x}%<extra></extra>"
             ))
             fig_h.update_layout(
@@ -1079,7 +1486,7 @@ elif role == "Senior Warden":
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 xaxis=dict(range=[0,115], showgrid=False, visible=False),
-                yaxis=dict(showgrid=False, tickfont=dict(size=11, family="Inter, sans-serif")),
+                yaxis=dict(showgrid=False, tickfont=dict(size=11, family="Inter, sans-serif", color="#94a3b8")),
             )
             st.plotly_chart(fig_h, use_container_width=True, config={"displayModeBar": False})
     except ImportError:
@@ -1142,18 +1549,28 @@ elif role == "Senior Warden":
 
 # ── Footer ────────────────────────────────────────────────────────
 st.markdown("""
-<div style="margin-top:3rem;padding:1.5rem 2rem;border-top:1px solid #e2e8f0;
-            background:#fff;border-radius:12px;
-            display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+<div style="margin-top:3rem;padding:1.5rem 2rem;
+            background:var(--glass-bg);
+            border:1px solid var(--glass-border);
+            border-radius:16px;
+            backdrop-filter:blur(12px);
+            display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+            box-shadow:0 4px 24px rgba(0,0,0,0.1);">
   <div>
-    <span style="font-size:0.85rem;font-weight:700;color:#0f172a;">University Mess Dues System</span>
-    <span style="color:#cbd5e1;margin:0 8px;">|</span>
-    <span style="font-size:0.8rem;color:#64748b;">Powered by Streamlit &amp; Google Sheets</span>
+    <span style="font-size:0.88rem;font-weight:800;
+                 background:linear-gradient(135deg,#6366f1,#8b5cf6);
+                 -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                 background-clip:text;">University Mess Dues System</span>
+    <span style="color:rgba(255,255,255,0.15);margin:0 8px;">|</span>
+    <span style="font-size:0.78rem;color:var(--text-muted);">Powered by Streamlit &amp; Google Sheets</span>
   </div>
   <div style="text-align:right;">
-    <span style="font-size:0.8rem;font-weight:700;color:#1d4ed8;">Designed &amp; Developed by Abdul Hadi</span>
+    <span style="font-size:0.82rem;font-weight:800;
+                 background:linear-gradient(135deg,#6366f1,#8b5cf6);
+                 -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                 background-clip:text;">Designed &amp; Developed by Abdul Hadi</span>
     <br>
-    <span style="font-size:0.72rem;color:#94a3b8;">2025 (S) &nbsp;·&nbsp; CYS 90 &nbsp;·&nbsp; University of Engineering &amp; Technology</span>
+    <span style="font-size:0.72rem;color:var(--text-muted);">2025 (S) &nbsp;·&nbsp; CYS 90 &nbsp;·&nbsp; UET</span>
   </div>
 </div>
 """, unsafe_allow_html=True)
