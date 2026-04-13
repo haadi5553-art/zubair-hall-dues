@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
-import uuid, hashlib, os
+import uuid, hashlib, os, base64
 import numpy as np
 
 try:
@@ -23,65 +23,13 @@ if "theme" not in st.session_state:
     st.session_state["theme"] = "dark"
 _t = st.session_state["theme"]
 
+# ─────────────────────────────────────────────────────────────────
+# SUPREME CSS — MAXIMUM LEVEL
+# ─────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700;800&display=swap');
 
-:root {{
-  --accent:        #6366f1;
-  --accent2:       #8b5cf6;
-  --accent3:       #06b6d4;
-  --green:         #10b981;
-  --red:           #f43f5e;
-  --amber:         #f59e0b;
-  --radius-xs:     8px;
-  --radius-sm:     12px;
-  --radius-md:     16px;
-  --radius-lg:     22px;
-  --radius-xl:     28px;
-
-  {"" if _t=="dark" else "/*"}
-  --bg-base:       #070711;
-  --bg-surface:    #0d0d1a;
-  --bg-card:       rgba(255,255,255,0.038);
-  --bg-card-h:     rgba(255,255,255,0.065);
-  --bg-sidebar:    #08080f;
-  --border:        rgba(255,255,255,0.07);
-  --border-s:      rgba(255,255,255,0.13);
-  --border-accent: rgba(99,102,241,0.35);
-  --text-1:        #f8fafc;
-  --text-2:        #94a3b8;
-  --text-3:        #475569;
-  --input-bg:      rgba(255,255,255,0.055);
-  --glass:         rgba(255,255,255,0.042);
-  --glass-b:       rgba(255,255,255,0.09);
-  --shadow:        0 8px 32px rgba(0,0,0,0.4);
-  --shadow-glow:   0 0 40px rgba(99,102,241,0.2);
-  {"" if _t=="dark" else "*/"}
-
-  {"/*" if _t=="dark" else ""}
-  --bg-base:       #f0f2ff;
-  --bg-surface:    #e8eafe;
-  --bg-card:       rgba(255,255,255,0.75);
-  --bg-card-h:     rgba(255,255,255,0.92);
-  --bg-sidebar:    #12103a;
-  --border:        rgba(99,102,241,0.1);
-  --border-s:      rgba(99,102,241,0.22);
-  --border-accent: rgba(99,102,241,0.4);
-  --text-1:        #0c0b2e;
-  --text-2:        #3730a3;
-  --text-3:        #6366f1;
-  --input-bg:      rgba(255,255,255,0.88);
-  --glass:         rgba(255,255,255,0.65);
-  --glass-b:       rgba(99,102,241,0.18);
-  --shadow:        0 8px 32px rgba(99,102,241,0.12);
-  --shadow-glow:   0 0 40px rgba(99,102,241,0.15);
-  {"*/" if _t=="dark" else ""}
-}}
-
-/* ─────────────────────────────────────────
-   BASE
-───────────────────────────────────────── */
 *, html, body, [class*="css"] {{
   font-family: 'Inter', sans-serif !important;
   -webkit-font-smoothing: antialiased;
@@ -89,481 +37,585 @@ st.markdown(f"""
   box-sizing: border-box;
 }}
 
+/* ══ THEME VARIABLES ══════════════════════════════════════════ */
+:root {{
+  {"" if _t=="dark" else "/*"}
+  --bg:           #06060e;
+  --bg2:          #0a0a16;
+  --bg3:          #0f0f1e;
+  --glass:        rgba(255,255,255,0.035);
+  --glass2:       rgba(255,255,255,0.06);
+  --glass3:       rgba(255,255,255,0.09);
+  --border:       rgba(255,255,255,0.065);
+  --border2:      rgba(255,255,255,0.12);
+  --border3:      rgba(255,255,255,0.18);
+  --t1:           #f0f4ff;
+  --t2:           #94a3b8;
+  --t3:           #4b5563;
+  --t4:           #1f2937;
+  --sidebar:      #050509;
+  --inp:          rgba(255,255,255,0.05);
+  {"" if _t=="dark" else "*/"}
+  {"/*" if _t=="dark" else ""}
+  --bg:           #eef0ff;
+  --bg2:          #e5e8ff;
+  --bg3:          #dce0ff;
+  --glass:        rgba(255,255,255,0.72);
+  --glass2:       rgba(255,255,255,0.85);
+  --glass3:       rgba(255,255,255,0.95);
+  --border:       rgba(99,102,241,0.1);
+  --border2:      rgba(99,102,241,0.2);
+  --border3:      rgba(99,102,241,0.32);
+  --t1:           #0d0b2e;
+  --t2:           #3730a3;
+  --t3:           #6366f1;
+  --t4:           #c7d2fe;
+  --sidebar:      #06040f;
+  --inp:          rgba(255,255,255,0.88);
+  {"*/" if _t=="dark" else ""}
+  --indigo:       #6366f1;
+  --violet:       #8b5cf6;
+  --cyan:         #06b6d4;
+  --emerald:      #10b981;
+  --rose:         #f43f5e;
+  --amber:        #f59e0b;
+  --r-xs:  8px; --r-sm: 12px; --r-md: 16px;
+  --r-lg: 22px; --r-xl: 30px; --r-2xl: 40px;
+}}
+
+/* ══ APP BACKGROUND ══════════════════════════════════════════ */
 .stApp {{
-  background: var(--bg-base) !important;
+  background: var(--bg) !important;
   background-image:
-    radial-gradient(ellipse 90% 60% at 15% -5%,  rgba(99,102,241,0.18) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 50% at 85% 105%, rgba(139,92,246,0.14) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 40% at 50% 50%,  rgba(6,182,212,0.05) 0%, transparent 60%) !important;
+    radial-gradient(ellipse 100% 60% at 10% -10%, rgba(99,102,241,0.22) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 50% at 90% 110%,  rgba(139,92,246,0.18) 0%, transparent 48%),
+    radial-gradient(ellipse 60% 40% at 55% 55%,   rgba(6,182,212,0.06)  0%, transparent 55%) !important;
   background-attachment: fixed !important;
-  min-height: 100vh;
 }}
+.block-container {{ padding: 0 2.5rem 5rem !important; max-width: 1500px !important; }}
 
-.block-container {{
-  padding: 0 2.25rem 4rem !important;
-  max-width: 1480px !important;
-}}
-
-/* ─────────────────────────────────────────
-   ANIMATED PRISMATIC TOP BAR
-───────────────────────────────────────── */
+/* ══ ANIMATED AURORA TOP STRIP ════════════════════════════════ */
 .stApp::before {{
   content: '';
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 2px;
+  position: fixed; top: 0; left: 0; right: 0; height: 3px;
   background: linear-gradient(90deg,
-    #6366f1 0%, #8b5cf6 20%, #06b6d4 40%,
-    #10b981 60%, #f59e0b 80%, #6366f1 100%);
-  background-size: 400% 100%;
-  animation: prism 6s linear infinite;
+    #6366f1,#818cf8,#8b5cf6,#a78bfa,#06b6d4,
+    #10b981,#34d399,#f59e0b,#f43f5e,#6366f1);
+  background-size: 500% 100%;
+  animation: aurora 8s linear infinite;
   z-index: 99999;
 }}
-@keyframes prism {{
-  0%   {{ background-position: 0%   0%; }}
-  100% {{ background-position: 400% 0%; }}
-}}
+@keyframes aurora {{ 0%{{background-position:0% 0%}} 100%{{background-position:500% 0%}} }}
 
-/* ─────────────────────────────────────────
-   SCROLLBAR
-───────────────────────────────────────── */
-::-webkit-scrollbar {{ width: 5px; height: 5px; }}
-::-webkit-scrollbar-track {{ background: transparent; }}
-::-webkit-scrollbar-thumb {{
-  background: rgba(99,102,241,0.35);
-  border-radius: 99px;
+/* ══ FLOATING ORBS (decorative) ═══════════════════════════════ */
+.stApp::after {{
+  content: '';
+  position: fixed; bottom: -200px; right: -200px;
+  width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+  animation: orb-float 12s ease-in-out infinite alternate;
 }}
+@keyframes orb-float {{ 0%{{transform:translate(0,0) scale(1)}} 100%{{transform:translate(-40px,-40px) scale(1.1)}} }}
+
+/* ══ SCROLLBAR ═══════════════════════════════════════════════ */
+::-webkit-scrollbar {{ width: 4px; height: 4px; }}
+::-webkit-scrollbar-track {{ background: transparent; }}
+::-webkit-scrollbar-thumb {{ background: rgba(99,102,241,0.3); border-radius: 99px; }}
 ::-webkit-scrollbar-thumb:hover {{ background: rgba(99,102,241,0.6); }}
 
-/* ─────────────────────────────────────────
-   SIDEBAR
-───────────────────────────────────────── */
+/* ══ SIDEBAR ═════════════════════════════════════════════════ */
 [data-testid="stSidebar"] {{
-  background: var(--bg-sidebar) !important;
-  border-right: 1px solid rgba(99,102,241,0.12) !important;
-  box-shadow: 6px 0 40px rgba(99,102,241,0.08) !important;
+  background: var(--sidebar) !important;
+  border-right: 1px solid rgba(99,102,241,0.1) !important;
+  box-shadow: 8px 0 50px rgba(99,102,241,0.06) !important;
 }}
 [data-testid="stSidebar"] > div:first-child {{ background: transparent !important; }}
 [data-testid="stSidebar"] * {{ color: #c7d2fe !important; }}
 [data-testid="stSidebar"] label {{
-  color: rgba(99,102,241,0.8) !important;
-  font-size: 0.67rem !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.14em !important;
-  text-transform: uppercase !important;
+  color: rgba(99,102,241,0.75) !important;
+  font-size: 0.65rem !important; font-weight: 900 !important;
+  letter-spacing: 0.16em !important; text-transform: uppercase !important;
 }}
 [data-testid="stSidebar"] .stSelectbox > div > div {{
-  background: rgba(99,102,241,0.08) !important;
-  border: 1px solid rgba(99,102,241,0.22) !important;
-  border-radius: var(--radius-sm) !important;
-  color: #e0e7ff !important;
-  font-size: 0.86rem !important;
-  transition: border-color 0.2s, box-shadow 0.2s !important;
+  background: rgba(99,102,241,0.07) !important;
+  border: 1px solid rgba(99,102,241,0.2) !important;
+  border-radius: var(--r-sm) !important; color: #e0e7ff !important;
+  font-size: 0.85rem !important; backdrop-filter: blur(12px) !important;
+  transition: all 0.2s ease !important;
 }}
 [data-testid="stSidebar"] .stSelectbox > div > div:focus-within {{
   border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.18) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.16), 0 0 20px rgba(99,102,241,0.15) !important;
 }}
 [data-testid="stSidebar"] .stTextInput > div > div > input {{
-  background: rgba(99,102,241,0.08) !important;
-  border: 1px solid rgba(99,102,241,0.22) !important;
-  border-radius: var(--radius-sm) !important;
-  color: #e0e7ff !important;
-  font-size: 0.86rem !important;
+  background: rgba(99,102,241,0.07) !important;
+  border: 1px solid rgba(99,102,241,0.2) !important;
+  border-radius: var(--r-sm) !important; color: #e0e7ff !important;
+  transition: all 0.2s ease !important;
 }}
 [data-testid="stSidebar"] .stTextInput > div > div > input:focus {{
   border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.18) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.16), 0 0 20px rgba(99,102,241,0.15) !important;
+  outline: none !important;
 }}
 
-/* ─────────────────────────────────────────
-   SIDEBAR LOGO BLOCK
-───────────────────────────────────────── */
-.sb-logo {{
-  padding: 2rem 1.4rem 1.4rem;
-  border-bottom: 1px solid rgba(99,102,241,0.15);
-  margin-bottom: 1.4rem;
-  position: relative;
-  overflow: hidden;
-}}
-.sb-logo::after {{
-  content: '';
-  position: absolute;
-  top: -30px; right: -30px;
-  width: 100px; height: 100px;
-  background: radial-gradient(circle, rgba(99,102,241,0.18), transparent 70%);
-  pointer-events: none;
-}}
-.sb-logo .icon-ring {{
-  width: 46px; height: 46px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.2));
-  border: 1px solid rgba(99,102,241,0.4);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 22px;
-  margin-bottom: 14px;
-  box-shadow: 0 4px 16px rgba(99,102,241,0.25);
-}}
-.sb-logo h2 {{
-  font-family: 'Space Grotesk', sans-serif !important;
-  font-size: 1.05rem; font-weight: 700;
-  color: #e0e7ff !important;
-  letter-spacing: -0.02em;
-  margin: 0 0 4px;
-}}
-.sb-logo p {{
-  font-size: 0.67rem; font-weight: 600;
-  color: rgba(99,102,241,0.7) !important;
-  letter-spacing: 0.1em; text-transform: uppercase;
-  margin: 0;
-}}
-
-/* ─────────────────────────────────────────
-   SIDEBAR FOOTER CREDIT
-───────────────────────────────────────── */
-.sb-credit {{
-  margin: 12px 10px 0;
-  padding: 14px 14px;
-  border-top: 1px solid rgba(99,102,241,0.14);
-  border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, rgba(99,102,241,0.07), rgba(139,92,246,0.05));
-  text-align: center;
-}}
-.sb-credit .name {{
-  font-size: 0.86rem; font-weight: 800;
-  background: linear-gradient(135deg, #a5b4fc, #c4b5fd);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.01em;
-}}
-.sb-credit .sub {{
-  font-size: 0.68rem; font-weight: 600;
-  color: rgba(99,102,241,0.65) !important;
-  margin-top: 3px; letter-spacing: 0.06em;
-}}
-.sb-credit .tag {{
-  font-size: 0.62rem; color: rgba(99,102,241,0.4) !important;
-  margin-top: 5px; font-style: italic; letter-spacing: 0.04em;
-}}
-
-/* ─────────────────────────────────────────
-   BUTTONS
-───────────────────────────────────────── */
+/* ══ BUTTONS ═════════════════════════════════════════════════ */
 .stButton > button {{
   background: linear-gradient(135deg, #6366f1 0%, #7c3aed 100%) !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: var(--radius-sm) !important;
-  font-weight: 700 !important;
-  font-size: 0.84rem !important;
-  padding: 0.6rem 1.6rem !important;
-  letter-spacing: 0.02em !important;
-  box-shadow: 0 4px 18px rgba(99,102,241,0.38), inset 0 1px 0 rgba(255,255,255,0.12) !important;
+  color: #fff !important; border: none !important;
+  border-radius: var(--r-sm) !important;
+  font-weight: 700 !important; font-size: 0.84rem !important;
+  padding: 0.6rem 1.6rem !important; letter-spacing: 0.025em !important;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.15) !important;
   transition: all 0.22s cubic-bezier(.4,0,.2,1) !important;
-  position: relative !important;
-  overflow: hidden !important;
+  position: relative !important; overflow: hidden !important;
 }}
-.stButton > button::after {{
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.14), transparent);
-  border-radius: inherit;
-  opacity: 0;
-  transition: opacity 0.2s;
+.stButton > button::before {{
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+  border-radius: inherit; opacity: 0; transition: opacity 0.2s;
 }}
 .stButton > button:hover {{
-  transform: translateY(-2px) scale(1.01) !important;
-  box-shadow: 0 10px 30px rgba(99,102,241,0.5), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+  transform: translateY(-2px) scale(1.015) !important;
+  box-shadow: 0 12px 35px rgba(99,102,241,0.55), inset 0 1px 0 rgba(255,255,255,0.18) !important;
 }}
-.stButton > button:hover::after {{ opacity: 1; }}
-.stButton > button:active {{ transform: translateY(0) scale(0.99) !important; }}
+.stButton > button:hover::before {{ opacity: 1; }}
+.stButton > button:active {{ transform: translateY(0) scale(0.985) !important; }}
 .stButton > button[kind="primary"] {{
-  background: linear-gradient(135deg, #f43f5e, #e11d48) !important;
-  box-shadow: 0 4px 18px rgba(244,63,94,0.38), inset 0 1px 0 rgba(255,255,255,0.1) !important;
+  background: linear-gradient(135deg, #f43f5e, #be123c) !important;
+  box-shadow: 0 4px 20px rgba(244,63,94,0.4), inset 0 1px 0 rgba(255,255,255,0.12) !important;
 }}
 .stButton > button[kind="primary"]:hover {{
-  box-shadow: 0 10px 30px rgba(244,63,94,0.52) !important;
+  box-shadow: 0 12px 35px rgba(244,63,94,0.55) !important;
 }}
 [data-testid="stDownloadButton"] > button {{
-  background: linear-gradient(135deg, #10b981, #059669) !important;
-  box-shadow: 0 4px 18px rgba(16,185,129,0.32) !important;
+  background: linear-gradient(135deg, #10b981, #047857) !important;
+  box-shadow: 0 4px 20px rgba(16,185,129,0.36) !important;
 }}
 [data-testid="stDownloadButton"] > button:hover {{
-  box-shadow: 0 10px 28px rgba(16,185,129,0.5) !important;
+  box-shadow: 0 12px 32px rgba(16,185,129,0.52) !important;
 }}
 
-/* ─────────────────────────────────────────
-   TABS
-───────────────────────────────────────── */
+/* ══ TABS ════════════════════════════════════════════════════ */
 .stTabs [data-baseweb="tab-list"] {{
   background: var(--glass) !important;
-  border: 1px solid var(--glass-b) !important;
-  border-radius: var(--radius-md) !important;
-  padding: 5px !important;
-  gap: 3px !important;
-  backdrop-filter: blur(16px) !important;
-  box-shadow: var(--shadow) !important;
+  border: 1px solid var(--border2) !important;
+  border-radius: var(--r-md) !important;
+  padding: 5px !important; gap: 3px !important;
+  backdrop-filter: blur(20px) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.06) !important;
 }}
 .stTabs [data-baseweb="tab"] {{
-  border-radius: var(--radius-xs) !important;
-  font-weight: 500 !important;
-  font-size: 0.84rem !important;
-  color: var(--text-2) !important;
-  padding: 0.48rem 1.1rem !important;
-  transition: all 0.18s ease !important;
-  letter-spacing: 0.01em !important;
+  border-radius: var(--r-xs) !important;
+  font-weight: 500 !important; font-size: 0.84rem !important;
+  color: var(--t2) !important; padding: 0.5rem 1.15rem !important;
+  transition: all 0.18s ease !important; letter-spacing: 0.01em !important;
 }}
 .stTabs [data-baseweb="tab"]:hover {{
-  background: var(--bg-card-h) !important;
-  color: var(--text-1) !important;
+  background: var(--glass2) !important; color: var(--t1) !important;
 }}
 .stTabs [aria-selected="true"] {{
   background: linear-gradient(135deg, #6366f1, #7c3aed) !important;
-  color: #fff !important;
-  font-weight: 700 !important;
-  box-shadow: 0 4px 16px rgba(99,102,241,0.42), inset 0 1px 0 rgba(255,255,255,0.12) !important;
+  color: #fff !important; font-weight: 700 !important;
+  box-shadow: 0 4px 18px rgba(99,102,241,0.45),
+              inset 0 1px 0 rgba(255,255,255,0.15) !important;
 }}
 
-/* ─────────────────────────────────────────
-   METRIC CARDS
-───────────────────────────────────────── */
+/* ══ METRIC CARDS ════════════════════════════════════════════ */
 [data-testid="metric-container"] {{
   background: var(--glass) !important;
-  border: 1px solid var(--glass-b) !important;
-  border-radius: var(--radius-md) !important;
-  padding: 1.35rem 1.6rem 1.2rem !important;
-  backdrop-filter: blur(20px) !important;
-  box-shadow: var(--shadow) !important;
-  transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+  border: 1px solid var(--border2) !important;
+  border-radius: var(--r-md) !important;
+  padding: 1.4rem 1.7rem 1.25rem !important;
+  backdrop-filter: blur(24px) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2),
+              inset 0 1px 0 rgba(255,255,255,0.07) !important;
+  transition: transform 0.28s cubic-bezier(.4,0,.2,1),
+              box-shadow 0.28s cubic-bezier(.4,0,.2,1) !important;
   position: relative; overflow: hidden;
 }}
 [data-testid="metric-container"]::before {{
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
   background: linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4);
+  opacity: 0.8;
 }}
 [data-testid="metric-container"]::after {{
-  content: '';
-  position: absolute; top: -50%; right: -30%;
-  width: 120px; height: 120px;
+  content: ''; position: absolute; top: -50%; right: -25%;
+  width: 140px; height: 140px; border-radius: 50%;
   background: radial-gradient(circle, rgba(99,102,241,0.1), transparent 70%);
   pointer-events: none;
 }}
 [data-testid="metric-container"]:hover {{
-  transform: translateY(-4px) !important;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.3), 0 0 32px rgba(99,102,241,0.18) !important;
-  border-color: rgba(99,102,241,0.35) !important;
+  transform: translateY(-5px) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.28),
+              0 0 40px rgba(99,102,241,0.2) !important;
+  border-color: rgba(99,102,241,0.4) !important;
 }}
 [data-testid="stMetricValue"] {{
   font-family: 'Space Grotesk', sans-serif !important;
-  font-size: 2rem !important;
-  font-weight: 800 !important;
-  letter-spacing: -0.05em !important;
-  background: linear-gradient(135deg, var(--text-1) 40%, rgba(99,102,241,0.85));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 2.1rem !important; font-weight: 800 !important;
+  letter-spacing: -0.05em !important; line-height: 1.1 !important;
+  background: linear-gradient(135deg, var(--t1) 30%, #818cf8) !important;
+  -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
 }}
 [data-testid="stMetricLabel"] {{
-  font-size: 0.68rem !important; font-weight: 800 !important;
-  color: var(--text-3) !important;
-  letter-spacing: 0.12em !important; text-transform: uppercase !important;
+  font-size: 0.67rem !important; font-weight: 800 !important;
+  color: var(--t3) !important;
+  letter-spacing: 0.14em !important; text-transform: uppercase !important;
 }}
-[data-testid="stMetricDelta"] {{ font-size: 0.78rem !important; font-weight: 600 !important; }}
+[data-testid="stMetricDelta"] {{
+  font-size: 0.79rem !important; font-weight: 600 !important;
+}}
 
-/* ─────────────────────────────────────────
-   HEADINGS
-───────────────────────────────────────── */
+/* ══ HEADINGS ════════════════════════════════════════════════ */
 h1 {{
   font-family: 'Space Grotesk', sans-serif !important;
-  font-size: 2rem !important; font-weight: 800 !important;
-  letter-spacing: -0.04em !important; line-height: 1.15 !important;
-  background: linear-gradient(135deg, var(--text-1) 50%, #818cf8);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 2.1rem !important; font-weight: 800 !important;
+  letter-spacing: -0.045em !important; line-height: 1.12 !important;
+  background: linear-gradient(135deg, var(--t1) 45%, #818cf8 100%) !important;
+  -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
 }}
 h2 {{
   font-family: 'Space Grotesk', sans-serif !important;
-  font-size: 1.25rem !important; font-weight: 700 !important;
-  color: var(--text-1) !important; letter-spacing: -0.025em !important;
+  font-size: 1.3rem !important; font-weight: 700 !important;
+  color: var(--t1) !important; letter-spacing: -0.025em !important;
 }}
-h3 {{
-  font-size: 0.95rem !important; font-weight: 600 !important;
-  color: var(--text-2) !important;
-}}
+h3 {{ font-size: 0.95rem !important; font-weight: 600 !important; color: var(--t2) !important; }}
 
-/* ─────────────────────────────────────────
-   DATAFRAME
-───────────────────────────────────────── */
+/* ══ DATAFRAME ═══════════════════════════════════════════════ */
 [data-testid="stDataFrame"] {{
-  border-radius: var(--radius-md) !important;
-  overflow: hidden !important;
-  border: 1px solid var(--glass-b) !important;
-  box-shadow: var(--shadow) !important;
-  backdrop-filter: blur(12px) !important;
+  border-radius: var(--r-md) !important; overflow: hidden !important;
+  border: 1px solid var(--border2) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18),
+              inset 0 1px 0 rgba(255,255,255,0.05) !important;
+  backdrop-filter: blur(16px) !important;
 }}
 .dataframe thead th {{
-  background: rgba(99,102,241,0.1) !important;
-  font-size: 0.7rem !important; font-weight: 800 !important;
-  color: #818cf8 !important;
-  text-transform: uppercase !important; letter-spacing: 0.1em !important;
-  padding: 13px 16px !important;
+  background: rgba(99,102,241,0.12) !important;
+  font-size: 0.68rem !important; font-weight: 900 !important;
+  color: #a5b4fc !important; text-transform: uppercase !important;
+  letter-spacing: 0.12em !important; padding: 14px 18px !important;
   border-bottom: 1px solid rgba(99,102,241,0.2) !important;
 }}
 .dataframe td {{
-  font-size: 0.875rem !important; color: var(--text-1) !important;
-  padding: 11px 16px !important;
-  border-bottom: 1px solid var(--border) !important;
+  font-size: 0.875rem !important; color: var(--t1) !important;
+  padding: 12px 18px !important; border-bottom: 1px solid var(--border) !important;
 }}
+.dataframe tr:hover td {{ background: var(--glass2) !important; }}
 .dataframe tr:last-child td {{ border-bottom: none !important; }}
 
-/* ─────────────────────────────────────────
-   ALERTS
-───────────────────────────────────────── */
+/* ══ ALERTS ══════════════════════════════════════════════════ */
 .stSuccess, .stWarning, .stInfo, .stError {{
-  border-radius: var(--radius-sm) !important;
-  backdrop-filter: blur(12px) !important;
-  border-left-width: 3px !important;
-  border-width: 1px !important;
+  border-radius: var(--r-sm) !important;
+  backdrop-filter: blur(14px) !important;
+  border-width: 1px !important; border-left-width: 3px !important;
   font-size: 0.875rem !important;
 }}
 
-/* ─────────────────────────────────────────
-   FORM INPUTS
-───────────────────────────────────────── */
+/* ══ FORM INPUTS ═════════════════════════════════════════════ */
 .stSelectbox > div > div {{
-  border-radius: var(--radius-sm) !important;
-  border: 1px solid var(--border-s) !important;
-  background: var(--input-bg) !important;
-  font-size: 0.875rem !important;
-  color: var(--text-1) !important;
-  transition: border-color 0.2s, box-shadow 0.2s !important;
-  backdrop-filter: blur(8px) !important;
+  border-radius: var(--r-sm) !important; border: 1px solid var(--border2) !important;
+  background: var(--inp) !important; color: var(--t1) !important;
+  font-size: 0.875rem !important; backdrop-filter: blur(10px) !important;
+  transition: all 0.2s ease !important;
 }}
 .stSelectbox > div > div:focus-within {{
   border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.18) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.16), 0 0 20px rgba(99,102,241,0.12) !important;
 }}
 .stNumberInput > div > div > input,
 .stTextInput > div > div > input {{
-  border-radius: var(--radius-sm) !important;
-  border: 1px solid var(--border-s) !important;
-  background: var(--input-bg) !important;
-  color: var(--text-1) !important;
-  font-size: 0.875rem !important;
-  transition: border-color 0.2s, box-shadow 0.2s !important;
+  border-radius: var(--r-sm) !important; border: 1px solid var(--border2) !important;
+  background: var(--inp) !important; color: var(--t1) !important;
+  font-size: 0.875rem !important; transition: all 0.2s ease !important;
 }}
 .stNumberInput > div > div > input:focus,
 .stTextInput > div > div > input:focus {{
   border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.18) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.16), 0 0 20px rgba(99,102,241,0.12) !important;
   outline: none !important;
 }}
 
-/* ─────────────────────────────────────────
-   FILE UPLOADER
-───────────────────────────────────────── */
+/* ══ FILE UPLOADER ═══════════════════════════════════════════ */
 [data-testid="stFileUploadDropzone"] {{
   border: 2px dashed rgba(99,102,241,0.35) !important;
-  border-radius: var(--radius-md) !important;
+  border-radius: var(--r-md) !important;
   background: rgba(99,102,241,0.04) !important;
-  transition: all 0.22s ease !important;
-  backdrop-filter: blur(8px) !important;
+  backdrop-filter: blur(10px) !important;
+  transition: all 0.25s ease !important;
 }}
 [data-testid="stFileUploadDropzone"]:hover {{
   border-color: rgba(99,102,241,0.7) !important;
-  background: rgba(99,102,241,0.08) !important;
+  background: rgba(99,102,241,0.09) !important;
+  box-shadow: 0 0 30px rgba(99,102,241,0.12) !important;
 }}
 
-/* ─────────────────────────────────────────
-   EXPANDER
-───────────────────────────────────────── */
+/* ══ EXPANDER ════════════════════════════════════════════════ */
 [data-testid="stExpander"] {{
-  border: 1px solid var(--glass-b) !important;
-  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--border2) !important;
+  border-radius: var(--r-md) !important;
   background: var(--glass) !important;
-  backdrop-filter: blur(14px) !important;
-  transition: border-color 0.2s, box-shadow 0.2s !important;
-  overflow: hidden !important;
+  backdrop-filter: blur(16px) !important;
+  transition: all 0.25s ease !important; overflow: hidden !important;
 }}
 [data-testid="stExpander"]:hover {{
-  border-color: rgba(99,102,241,0.28) !important;
-  box-shadow: 0 4px 24px rgba(99,102,241,0.1) !important;
-}}
-[data-testid="stExpander"] summary {{
-  font-size: 0.88rem !important; font-weight: 600 !important;
-  color: var(--text-1) !important; padding: 0.9rem 1.1rem !important;
+  border-color: rgba(99,102,241,0.3) !important;
+  box-shadow: 0 6px 30px rgba(99,102,241,0.1) !important;
 }}
 
-/* ─────────────────────────────────────────
-   SECTION LABEL
-───────────────────────────────────────── */
-.section-header {{
-  font-size: 0.65rem; font-weight: 900;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+/* ══ HR ══════════════════════════════════════════════════════ */
+hr {{
+  border: none !important; height: 1px !important;
+  background: linear-gradient(90deg, transparent, var(--border2), transparent) !important;
+  margin: 2rem 0 !important;
+}}
+
+.stCaption {{ color: var(--t3) !important; font-size: 0.73rem !important; }}
+
+/* ══ SECTION LABEL ═══════════════════════════════════════════ */
+.sec-lbl {{
+  display: flex; align-items: center; gap: 10px;
+  font-size: 0.64rem; font-weight: 900; letter-spacing: 0.18em;
+  text-transform: uppercase; margin: 0.25rem 0 1rem;
+  background: linear-gradient(135deg, #6366f1, #a78bfa);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
-  letter-spacing: 0.18em; text-transform: uppercase;
-  margin-bottom: 1rem; margin-top: 0.2rem;
-  display: flex; align-items: center; gap: 10px;
 }}
-.section-header::before {{
-  content: '';
-  display: inline-block; width: 20px; height: 2px;
+.sec-lbl::before {{
+  content: ''; display: block; width: 22px; height: 2px; flex-shrink: 0;
   background: linear-gradient(90deg, #6366f1, #8b5cf6);
-  border-radius: 99px; flex-shrink: 0;
+  border-radius: 99px; box-shadow: 0 0 8px rgba(99,102,241,0.5);
 }}
-.section-header::after {{
+.sec-lbl::after {{
   content: ''; flex: 1; height: 1px;
-  background: linear-gradient(90deg, var(--border-s), transparent);
+  background: linear-gradient(90deg, var(--border2), transparent);
 }}
 
-/* ─────────────────────────────────────────
-   PAGE HEADER BLOCK
-───────────────────────────────────────── */
-.ph-wrap {{
-  background: var(--glass);
-  border: 1px solid var(--glass-b);
-  border-radius: var(--radius-lg);
-  padding: 1.75rem 2.25rem;
-  margin-bottom: 2rem;
-  backdrop-filter: blur(20px);
-  box-shadow: var(--shadow);
+/* ══ PAGE HEADER ═════════════════════════════════════════════ */
+.ph {{
+  background: var(--glass); border: 1px solid var(--border2);
+  border-radius: var(--r-xl); padding: 1.75rem 2.25rem;
+  margin-bottom: 2.25rem; backdrop-filter: blur(24px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2),
+              inset 0 1px 0 rgba(255,255,255,0.07);
   position: relative; overflow: hidden;
 }}
-.ph-wrap::before {{
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(99,102,241,0.5), rgba(139,92,246,0.4), transparent);
+.ph::before {{
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99,102,241,0.55),
+              rgba(139,92,246,0.45), transparent);
 }}
-.ph-wrap::after {{
-  content: '';
-  position: absolute; top: -60px; right: -40px;
-  width: 200px; height: 200px;
-  background: radial-gradient(circle, rgba(99,102,241,0.12), transparent 70%);
+.ph::after {{
+  content: ''; position: absolute; top: -80px; right: -60px;
+  width: 260px; height: 260px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,102,241,0.1), transparent 70%);
   pointer-events: none;
 }}
 .ph-badge {{
   display: inline-flex; align-items: center; gap: 6px;
-  background: rgba(99,102,241,0.12);
-  border: 1px solid rgba(99,102,241,0.28);
-  border-radius: 999px;
-  padding: 5px 14px;
-  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em;
-  color: #a5b4fc;
-  margin-bottom: 10px;
+  background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25);
+  border-radius: 999px; padding: 4px 14px;
+  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.07em; color: #a5b4fc;
+  margin-bottom: 10px; backdrop-filter: blur(8px);
+}}
+.ph-badge::before {{
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: #6366f1; box-shadow: 0 0 8px #6366f1;
+  animation: pulse-dot 2s ease-in-out infinite;
+}}
+@keyframes pulse-dot {{
+  0%,100%{{ opacity:1; transform:scale(1); }}
+  50%{{ opacity:0.5; transform:scale(0.7); }}
 }}
 
-/* ─────────────────────────────────────────
-   HR
-───────────────────────────────────────── */
-hr {{
-  border: none !important; height: 1px !important;
-  background: linear-gradient(90deg, transparent, var(--border-s), transparent) !important;
-  margin: 1.75rem 0 !important;
+/* ══ STUDENT CARD ════════════════════════════════════════════ */
+.sc {{
+  position: relative; border-radius: 20px;
+  padding: 22px 26px 20px; margin-bottom: 14px;
+  backdrop-filter: blur(24px);
+  transition: transform 0.28s cubic-bezier(.4,0,.2,1),
+              box-shadow 0.28s cubic-bezier(.4,0,.2,1);
+  overflow: hidden;
+}}
+.sc:hover {{ transform: translateY(-3px); }}
+.sc-top {{ height: 2px; position: absolute; top: 0; left: 0; right: 0; }}
+.sc-avatar {{
+  width: 52px; height: 52px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 900; color: #fff; flex-shrink: 0;
+}}
+.sc-name {{
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.08rem; font-weight: 700; letter-spacing: -0.015em;
+  color: var(--t1);
+}}
+.sc-room {{ font-size: 0.78rem; color: var(--t3); margin-top: 3px; }}
+.sc-badge {{
+  display: inline-block; padding: 5px 14px; border-radius: 999px;
+  font-size: 0.7rem; font-weight: 800; letter-spacing: 0.07em; color: #fff;
+}}
+.sc-bar-track {{
+  background: rgba(255,255,255,0.07); border-radius: 999px;
+  height: 5px; overflow: hidden; margin: 8px 0 18px;
+}}
+.sc-bar {{
+  height: 5px; border-radius: 999px;
+  transition: width 0.7s cubic-bezier(.4,0,.2,1);
+}}
+.sc-stats {{
+  display: grid; grid-template-columns: repeat(4,1fr);
+  background: rgba(255,255,255,0.035); border-radius: 14px;
+  border: 1px solid var(--border); overflow: hidden;
+}}
+.sc-stat {{
+  padding: 11px 16px;
+  border-right: 1px solid var(--border);
+}}
+.sc-stat:last-child {{ border-right: none; }}
+.sc-stat-lbl {{
+  font-size: 0.6rem; font-weight: 800; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--t3);
+}}
+.sc-stat-val {{
+  font-size: 0.95rem; font-weight: 700; margin-top: 4px;
+  color: var(--t1); font-variant-numeric: tabular-nums;
 }}
 
-.stCaption {{ color: var(--text-3) !important; font-size: 0.73rem !important; }}
+/* ══ RECEIPT CARD ════════════════════════════════════════════ */
+.rc {{
+  display: flex; justify-content: space-between;
+  align-items: center; flex-wrap: wrap; gap: 10px;
+  background: var(--glass); border: 1px solid rgba(16,185,129,0.2);
+  border-radius: 16px; padding: 14px 20px; margin-bottom: 10px;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 3px 20px rgba(16,185,129,0.08);
+  transition: all 0.22s ease;
+}}
+.rc:hover {{
+  border-color: rgba(16,185,129,0.4);
+  box-shadow: 0 8px 32px rgba(16,185,129,0.14);
+  transform: translateX(3px);
+}}
+.rc-avatar {{
+  width: 44px; height: 44px; border-radius: 13px;
+  background: linear-gradient(135deg,#10b981,#047857);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 900; color: #fff; flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(16,185,129,0.4);
+}}
+.rc-name {{ font-size: 0.93rem; font-weight: 700; color: var(--t1); }}
+.rc-sub {{ font-size: 0.75rem; color: var(--t3); margin-top: 2px; }}
+.rc-amt {{
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.2rem; font-weight: 800;
+  background: linear-gradient(135deg,#10b981,#34d399);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; font-variant-numeric: tabular-nums;
+}}
+
+/* ══ HALL SUMMARY CARD ═══════════════════════════════════════ */
+.hsc {{
+  background: var(--glass); border: 1px solid var(--border2);
+  border-radius: 20px; padding: 22px 26px; margin-bottom: 12px;
+  backdrop-filter: blur(20px);
+  transition: transform 0.28s cubic-bezier(.4,0,.2,1),
+              box-shadow 0.28s cubic-bezier(.4,0,.2,1);
+  position: relative; overflow: hidden;
+}}
+.hsc:hover {{ transform: translateY(-3px); }}
+.hsc::before {{
+  content: ''; position: absolute; top: 0; left: 0; bottom: 0;
+  width: 3px; border-radius: 20px 0 0 20px;
+}}
+
+/* ══ SIDEBAR LOGO ════════════════════════════════════════════ */
+.sb-logo {{
+  padding: 2rem 1.4rem 1.5rem;
+  border-bottom: 1px solid rgba(99,102,241,0.12);
+  margin-bottom: 1.4rem; position: relative; overflow: hidden;
+}}
+.sb-logo::after {{
+  content: ''; position: absolute; top: -40px; right: -40px;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,102,241,0.15), transparent 70%);
+  pointer-events: none;
+}}
+.sb-icon {{
+  width: 48px; height: 48px; border-radius: 16px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.18));
+  border: 1px solid rgba(99,102,241,0.35);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; margin-bottom: 14px;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.22),
+              inset 0 1px 0 rgba(255,255,255,0.1);
+}}
+.sb-title {{
+  font-family: 'Space Grotesk', sans-serif !important;
+  font-size: 1.05rem; font-weight: 800;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; letter-spacing: -0.02em;
+}}
+.sb-sub {{
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: rgba(99,102,241,0.65) !important;
+  margin-top: 4px;
+}}
+.sb-credit {{
+  margin: 10px; padding: 14px;
+  border-top: 1px solid rgba(99,102,241,0.12);
+  border-radius: var(--r-sm);
+  background: linear-gradient(135deg, rgba(99,102,241,0.07), rgba(139,92,246,0.05));
+  text-align: center;
+}}
+.sb-credit-name {{
+  font-family: 'Space Grotesk', sans-serif; font-size: 0.88rem; font-weight: 800;
+  background: linear-gradient(135deg, #a5b4fc, #c4b5fd);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; letter-spacing: -0.01em;
+}}
+.sb-credit-sub {{
+  font-size: 0.68rem; font-weight: 600; color: rgba(99,102,241,0.6) !important;
+  margin-top: 3px; letter-spacing: 0.05em;
+}}
+.sb-credit-tag {{
+  font-size: 0.61rem; color: rgba(99,102,241,0.38) !important;
+  margin-top: 5px; font-style: italic; letter-spacing: 0.03em;
+}}
+
+/* ══ FOOTER ══════════════════════════════════════════════════ */
+.footer {{
+  margin-top: 4rem; padding: 1.75rem 2.25rem;
+  background: var(--glass); border: 1px solid var(--border2);
+  border-radius: var(--r-xl); backdrop-filter: blur(24px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.15),
+              inset 0 1px 0 rgba(255,255,255,0.06);
+  display: flex; justify-content: space-between;
+  align-items: center; flex-wrap: wrap; gap: 12px;
+  position: relative; overflow: hidden;
+}}
+.footer::before {{
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99,102,241,0.45),
+              rgba(139,92,246,0.4), transparent);
+}}
+.footer-title {{
+  font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 800;
+  background: linear-gradient(135deg, #a5b4fc, #c4b5fd);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; letter-spacing: -0.01em;
+}}
+.footer-by {{
+  font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 800;
+  background: linear-gradient(135deg, #6366f1, #a5b4fc);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}}
+.footer-sub {{ font-size: 0.76rem; color: var(--t3); margin-top: 3px; }}
+.footer-meta {{ font-size: 0.72rem; color: var(--t3); margin-top: 4px; letter-spacing: 0.03em; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -644,7 +696,7 @@ def get_dues_from_cache(all_data, hall):
 def get_payments_from_cache(all_data, hall):
     key = find_sheet_key(all_data, f"{hall}_Payments")
     if key is None or all_data.get(key, pd.DataFrame()).empty:
-        return pd.DataFrame(columns=["Month","RoomNo","Name","Amount_Paid","Submission_Date","Receipt_File","File_Hash"])
+        return pd.DataFrame(columns=["Month","RoomNo","Name","Amount_Paid","Submission_Date","Receipt_B64","Receipt_Ext","File_Hash"])
     return all_data[key].copy()
 
 def clean_for_sheets(df):
@@ -700,111 +752,88 @@ senior_password = "senior@1122"
 # ══════════════════════════════════════════════════════════════════
 # UI COMPONENTS
 # ══════════════════════════════════════════════════════════════════
+def section_label(text):
+    st.markdown(f'<div class="sec-lbl">{text}</div>', unsafe_allow_html=True)
+
 def page_header(title, subtitle="", badge=""):
     badge_html = f'<div class="ph-badge">{badge}</div>' if badge else ""
-    st.markdown(f"""
-<div class="ph-wrap">
-  {badge_html}
-  <h1 style="margin:0;padding:0;">{title}</h1>
-  {"" if not subtitle else f'<p style="color:var(--text-2);margin:8px 0 0;font-size:0.9rem;font-weight:500;">{subtitle}</p>'}
-</div>
-""", unsafe_allow_html=True)
-    _c1, _c2 = st.columns([8,1])
+    sub_html   = f'<p style="color:var(--t2);margin:8px 0 0;font-size:0.9rem;font-weight:500;">{subtitle}</p>' if subtitle else ""
+    st.markdown(f'<div class="ph">{badge_html}<h1 style="margin:0;padding:0;">{title}</h1>{sub_html}</div>',
+                unsafe_allow_html=True)
+    _c1,_c2 = st.columns([8,1])
     with _c2:
-        icon  = "☀️" if _t == "dark" else "🌙"
-        label = "Light" if _t == "dark" else "Dark"
+        icon  = "☀" if _t=="dark" else "◑"
+        label = "Light" if _t=="dark" else "Dark"
         if st.button(f"{icon} {label}", key="theme_btn"):
-            st.session_state["theme"] = "light" if _t == "dark" else "dark"
+            st.session_state["theme"] = "light" if _t=="dark" else "dark"
             st.rerun()
-
-def section_label(text):
-    st.markdown(f'<p class="section-header">{text}</p>', unsafe_allow_html=True)
 
 def student_card(room, name, food, service, prev, total, paid_amount):
     remaining = max(0.0, total - paid_amount)
     pct = int(min(100, paid_amount / total * 100)) if total else 0
 
     if paid_amount >= total:
-        accent = "#10b981"; glow = "rgba(16,185,129,0.2)"
-        grad   = "linear-gradient(135deg,#10b981,#059669)"
-        badge  = "✓  PAID IN FULL"; border_col = "rgba(16,185,129,0.3)"
-        amt_html = f'<span style="color:#10b981;font-weight:800;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(total):,} — Cleared</span>'
+        accent="#10b981"; glow="rgba(16,185,129,0.22)"; grad="linear-gradient(135deg,#10b981,#059669)"
+        badge_txt="PAID IN FULL"; badge_ic="✓"; border_col="rgba(16,185,129,0.32)"
+        bg="rgba(16,185,129,0.05)"
+        amt_html=f'<span style="color:#10b981;font-weight:800;font-size:0.95rem;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(total):,} — Cleared</span>'
     elif paid_amount > 0:
-        accent = "#6366f1"; glow = "rgba(99,102,241,0.2)"
-        grad   = "linear-gradient(135deg,#6366f1,#8b5cf6)"
-        badge  = "◑  PARTIAL PAYMENT"; border_col = "rgba(99,102,241,0.3)"
-        amt_html = f'<span style="color:#818cf8;font-weight:800;font-variant-numeric:tabular-nums;">Paid&nbsp;Rs&nbsp;{int(paid_amount):,}&nbsp;<span style="opacity:.4">·</span>&nbsp;Due&nbsp;Rs&nbsp;{int(remaining):,}</span>'
+        accent="#6366f1"; glow="rgba(99,102,241,0.22)"; grad="linear-gradient(135deg,#6366f1,#8b5cf6)"
+        badge_txt="PARTIAL PAYMENT"; badge_ic="◑"; border_col="rgba(99,102,241,0.32)"
+        bg="rgba(99,102,241,0.05)"
+        amt_html=f'<span style="color:#818cf8;font-weight:800;font-size:0.95rem;font-variant-numeric:tabular-nums;">Paid&nbsp;Rs&nbsp;{int(paid_amount):,} &nbsp;·&nbsp; Due&nbsp;Rs&nbsp;{int(remaining):,}</span>'
     else:
-        accent = "#f43f5e"; glow = "rgba(244,63,94,0.18)"
-        grad   = "linear-gradient(135deg,#f43f5e,#e11d48)"
-        badge  = "✗  UNPAID"; border_col = "rgba(244,63,94,0.28)"
-        amt_html = f'<span style="color:#fb7185;font-weight:800;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(total):,} — Outstanding</span>'
+        accent="#f43f5e"; glow="rgba(244,63,94,0.2)"; grad="linear-gradient(135deg,#f43f5e,#be123c)"
+        badge_txt="UNPAID"; badge_ic="✗"; border_col="rgba(244,63,94,0.3)"
+        bg="rgba(244,63,94,0.04)"
+        amt_html=f'<span style="color:#fb7185;font-weight:800;font-size:0.95rem;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(total):,} — Outstanding</span>'
 
     initials = "".join([w[0].upper() for w in name.split()[:2]]) if name else "?"
 
     st.markdown(f"""
-<div style="
-  background:var(--glass);
-  border:1px solid {border_col};
-  border-radius:18px;
-  padding:20px 24px 18px;
-  margin-bottom:12px;
-  backdrop-filter:blur(20px);
-  box-shadow:0 4px 28px {glow}, 0 1px 3px rgba(0,0,0,0.12);
-  transition:transform 0.22s ease,box-shadow 0.22s ease;
-  position:relative; overflow:hidden;">
-  <div style="position:absolute;top:0;left:0;right:0;height:2px;background:{grad};"></div>
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+<div class="sc" style="background:{bg};border:1px solid {border_col};
+     box-shadow:0 6px 36px {glow},0 1px 4px rgba(0,0,0,0.14);">
+  <div class="sc-top" style="background:{grad};
+       box-shadow:0 0 20px {glow};"></div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-top:4px;">
     <div style="display:flex;align-items:center;gap:16px;">
-      <div style="
-        width:48px;height:48px;border-radius:14px;
-        background:{grad};
-        display:flex;align-items:center;justify-content:center;
-        font-size:15px;font-weight:900;color:#fff;flex-shrink:0;
-        box-shadow:0 6px 18px {glow};">{initials}</div>
+      <div class="sc-avatar" style="background:{grad};box-shadow:0 8px 24px {glow};">{initials}</div>
       <div>
-        <div style="font-size:1.05rem;font-weight:700;color:var(--text-1);letter-spacing:-0.015em;">{name}</div>
-        <div style="font-size:0.78rem;color:var(--text-3);margin-top:3px;">
-          Room&nbsp;<strong style="color:{accent};font-weight:700;">{room}</strong>
-        </div>
+        <div class="sc-name">{name}</div>
+        <div class="sc-room">Room&nbsp;<strong style="color:{accent};font-weight:700;">{room}</strong></div>
       </div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
-      <span style="
-        background:{grad};color:#fff;
-        padding:5px 14px;border-radius:999px;
-        font-size:0.7rem;font-weight:800;letter-spacing:0.07em;
-        box-shadow:0 3px 10px {glow};">{badge}</span>
+      <span class="sc-badge" style="background:{grad};box-shadow:0 4px 14px {glow};">
+        {badge_ic}&nbsp;&nbsp;{badge_txt}
+      </span>
       {amt_html}
     </div>
   </div>
-  <div style="margin-top:16px;">
-    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-      <span style="font-size:0.7rem;color:var(--text-3);font-weight:600;">Payment Progress</span>
-      <span style="font-size:0.7rem;font-weight:800;color:{accent};">{pct}%</span>
+  <div style="margin-top:18px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+      <span style="font-size:0.68rem;font-weight:700;color:var(--t3);letter-spacing:0.08em;text-transform:uppercase;">Payment Progress</span>
+      <span style="font-size:0.78rem;font-weight:900;color:{accent};">{pct}%</span>
     </div>
-    <div style="background:rgba(255,255,255,0.07);border-radius:999px;height:5px;overflow:hidden;margin-bottom:16px;">
-      <div style="background:{grad};height:5px;width:{pct}%;border-radius:999px;
-                  box-shadow:0 0 10px {glow};transition:width 0.6s cubic-bezier(.4,0,.2,1);"></div>
+    <div class="sc-bar-track">
+      <div class="sc-bar" style="width:{pct}%;background:{grad};box-shadow:0 0 12px {glow};"></div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;
-                background:rgba(255,255,255,0.04);border-radius:12px;
-                border:1px solid var(--border);overflow:hidden;">
-      <div style="padding:10px 14px;border-right:1px solid var(--border);">
-        <div style="font-size:0.62rem;font-weight:700;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;">Food</div>
-        <div style="font-size:0.92rem;font-weight:700;color:var(--text-1);margin-top:3px;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(food):,}</div>
+    <div class="sc-stats">
+      <div class="sc-stat">
+        <div class="sc-stat-lbl">Food Dues</div>
+        <div class="sc-stat-val">Rs&nbsp;{int(food):,}</div>
       </div>
-      <div style="padding:10px 14px;border-right:1px solid var(--border);">
-        <div style="font-size:0.62rem;font-weight:700;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;">Service</div>
-        <div style="font-size:0.92rem;font-weight:700;color:var(--text-1);margin-top:3px;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(service):,}</div>
+      <div class="sc-stat">
+        <div class="sc-stat-lbl">Service</div>
+        <div class="sc-stat-val">Rs&nbsp;{int(service):,}</div>
       </div>
-      <div style="padding:10px 14px;border-right:1px solid var(--border);">
-        <div style="font-size:0.62rem;font-weight:700;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;">Previous</div>
-        <div style="font-size:0.92rem;font-weight:700;color:var(--text-1);margin-top:3px;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(prev):,}</div>
+      <div class="sc-stat">
+        <div class="sc-stat-lbl">Previous</div>
+        <div class="sc-stat-val">Rs&nbsp;{int(prev):,}</div>
       </div>
-      <div style="padding:10px 14px;background:rgba(99,102,241,0.06);">
-        <div style="font-size:0.62rem;font-weight:700;color:{accent};letter-spacing:0.1em;text-transform:uppercase;">Total Due</div>
-        <div style="font-size:0.98rem;font-weight:900;color:{accent};margin-top:3px;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(total):,}</div>
+      <div class="sc-stat" style="background:rgba(99,102,241,0.07);">
+        <div class="sc-stat-lbl" style="color:{accent};">Total Due</div>
+        <div class="sc-stat-val" style="color:{accent};font-size:1.02rem;font-weight:900;">Rs&nbsp;{int(total):,}</div>
       </div>
     </div>
   </div>
@@ -816,88 +845,67 @@ def receipt_card(room, name, amount, date, idx):
     try: amt_fmt = f"Rs\u00a0{int(float(amount)):,}"
     except: amt_fmt = "Rs\u00a00"
     st.markdown(f"""
-<div style="
-  background:var(--glass);border:1px solid rgba(16,185,129,0.2);
-  border-radius:14px;padding:14px 20px;margin-bottom:8px;
-  display:flex;justify-content:space-between;align-items:center;
-  flex-wrap:wrap;gap:10px;
-  backdrop-filter:blur(14px);
-  box-shadow:0 2px 16px rgba(16,185,129,0.08);
-  transition:all 0.2s ease;">
+<div class="rc">
   <div style="display:flex;align-items:center;gap:14px;">
-    <div style="
-      width:42px;height:42px;border-radius:12px;
-      background:linear-gradient(135deg,#10b981,#059669);
-      display:flex;align-items:center;justify-content:center;
-      font-size:13px;font-weight:800;color:#fff;flex-shrink:0;
-      box-shadow:0 4px 12px rgba(16,185,129,0.35);">{initials}</div>
+    <div class="rc-avatar">{initials}</div>
     <div>
-      <div style="font-size:0.92rem;font-weight:700;color:var(--text-1);">{name}</div>
-      <div style="font-size:0.76rem;color:var(--text-3);margin-top:2px;">
-        Room&nbsp;<strong style="color:#6366f1;">{room}</strong>&nbsp;&nbsp;·&nbsp;&nbsp;{date}
-      </div>
+      <div class="rc-name">{name}</div>
+      <div class="rc-sub">Room&nbsp;<strong style="color:#818cf8;">{room}</strong>&nbsp;&nbsp;·&nbsp;&nbsp;{date}</div>
     </div>
   </div>
-  <div style="
-    font-family:'Space Grotesk',sans-serif;
-    font-size:1.15rem;font-weight:800;
-    background:linear-gradient(135deg,#10b981,#34d399);
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-    background-clip:text;font-variant-numeric:tabular-nums;">{amt_fmt}</div>
+  <div class="rc-amt">{amt_fmt}</div>
 </div>
 """, unsafe_allow_html=True)
 
 def hall_summary_card(hall_name, total, collected, remaining, pct_int):
     if total == 0:
-        accent = "#64748b"; glow = "rgba(100,116,139,0.1)"
-        grad   = "linear-gradient(135deg,#64748b,#475569)"
+        accent="#64748b"; glow="rgba(100,116,139,0.1)"; grad="linear-gradient(135deg,#64748b,#475569)"
     elif remaining == 0:
-        accent = "#10b981"; glow = "rgba(16,185,129,0.15)"
-        grad   = "linear-gradient(135deg,#10b981,#059669)"
+        accent="#10b981"; glow="rgba(16,185,129,0.18)"; grad="linear-gradient(135deg,#10b981,#059669)"
     elif collected > 0:
-        accent = "#6366f1"; glow = "rgba(99,102,241,0.15)"
-        grad   = "linear-gradient(135deg,#6366f1,#8b5cf6)"
+        accent="#6366f1"; glow="rgba(99,102,241,0.18)"; grad="linear-gradient(135deg,#6366f1,#8b5cf6)"
     else:
-        accent = "#f43f5e"; glow = "rgba(244,63,94,0.15)"
-        grad   = "linear-gradient(135deg,#f43f5e,#e11d48)"
+        accent="#f43f5e"; glow="rgba(244,63,94,0.18)"; grad="linear-gradient(135deg,#f43f5e,#be123c)"
 
     bar_w = min(100, pct_int)
     st.markdown(f"""
-<div style="
-  background:var(--glass);
-  border:1px solid var(--glass-b);
-  border-left:3px solid {accent};
-  border-radius:18px;padding:20px 24px;margin-bottom:10px;
-  backdrop-filter:blur(16px);
-  box-shadow:0 4px 24px {glow};
-  transition:all 0.25s ease;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;">
+<div class="hsc" style="box-shadow:0 6px 32px {glow};">
+  <div style="position:absolute;top:0;left:0;bottom:0;width:3px;
+              background:{grad};border-radius:20px 0 0 20px;
+              box-shadow:2px 0 12px {glow};"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px;padding-left:8px;">
     <div>
-      <div style="font-family:'Space Grotesk',sans-serif;font-size:1.02rem;font-weight:700;color:var(--text-1);">{hall_name}</div>
-      <div style="font-size:0.75rem;color:var(--text-3);margin-top:3px;">
-        Total Outstanding:&nbsp;<strong style="color:var(--text-2);font-variant-numeric:tabular-nums;">Rs&nbsp;{total:,}</strong>
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:700;
+                  color:var(--t1);letter-spacing:-0.02em;">{hall_name}</div>
+      <div style="font-size:0.75rem;color:var(--t3);margin-top:4px;">
+        Total Outstanding:&nbsp;<strong style="color:var(--t2);font-variant-numeric:tabular-nums;">Rs&nbsp;{total:,}</strong>
       </div>
     </div>
     <div style="text-align:right;flex-shrink:0;">
-      <div style="
-        font-family:'Space Grotesk',sans-serif;
-        font-size:1.7rem;font-weight:900;
-        background:{grad};
-        -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-        background-clip:text;font-variant-numeric:tabular-nums;
-        line-height:1;">{pct_int}%</div>
-      <div style="font-size:0.65rem;color:var(--text-3);font-weight:800;letter-spacing:0.1em;margin-top:2px;">COLLECTED</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:1.9rem;font-weight:900;
+                  background:{grad};-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                  background-clip:text;font-variant-numeric:tabular-nums;line-height:1;">{pct_int}%</div>
+      <div style="font-size:0.62rem;color:var(--t3);font-weight:900;letter-spacing:0.12em;margin-top:2px;">COLLECTED</div>
     </div>
   </div>
-  <div style="background:rgba(255,255,255,0.07);border-radius:999px;height:6px;overflow:hidden;margin-bottom:16px;">
-    <div style="background:{grad};height:6px;width:{bar_w}%;border-radius:999px;
-                box-shadow:0 0 12px {glow};transition:width 0.5s cubic-bezier(.4,0,.2,1);"></div>
+  <div style="background:rgba(255,255,255,0.06);border-radius:999px;height:7px;
+              overflow:hidden;margin-bottom:18px;padding-left:8px;box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);">
+    <div style="background:{grad};height:7px;width:{bar_w}%;border-radius:999px;
+                box-shadow:0 0 16px {glow};transition:width 0.6s cubic-bezier(.4,0,.2,1);"></div>
   </div>
-  <div style="display:flex;gap:24px;flex-wrap:wrap;">
-    <span style="font-size:0.79rem;color:var(--text-3);">Collected&nbsp;
-      <strong style="color:#10b981;font-variant-numeric:tabular-nums;">Rs&nbsp;{collected:,}</strong></span>
-    <span style="font-size:0.79rem;color:var(--text-3);">Remaining&nbsp;
-      <strong style="color:#f43f5e;font-variant-numeric:tabular-nums;">Rs&nbsp;{remaining:,}</strong></span>
+  <div style="display:flex;gap:28px;flex-wrap:wrap;padding-left:8px;">
+    <div>
+      <div style="font-size:0.63rem;font-weight:800;color:var(--t3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">Collected</div>
+      <div style="font-size:0.95rem;font-weight:800;color:#10b981;font-variant-numeric:tabular-nums;">Rs&nbsp;{collected:,}</div>
+    </div>
+    <div>
+      <div style="font-size:0.63rem;font-weight:800;color:var(--t3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">Remaining</div>
+      <div style="font-size:0.95rem;font-weight:800;color:#f43f5e;font-variant-numeric:tabular-nums;">Rs&nbsp;{remaining:,}</div>
+    </div>
+    <div>
+      <div style="font-size:0.63rem;font-weight:800;color:var(--t3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;">Students</div>
+      <div style="font-size:0.95rem;font-weight:800;color:var(--t2);font-variant-numeric:tabular-nums;">—</div>
+    </div>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -908,9 +916,9 @@ def hall_summary_card(hall_name, total, collected, remaining, pct_int):
 # ══════════════════════════════════════════════════════════════════
 st.sidebar.markdown("""
 <div class="sb-logo">
-  <div class="icon-ring">🏛️</div>
-  <h2>Mess Dues System</h2>
-  <p>University Hostel Management</p>
+  <div class="sb-icon">🏛️</div>
+  <div class="sb-title">Mess Dues System</div>
+  <div class="sb-sub">University Hostel Management</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -924,16 +932,12 @@ if AUTO_REFRESH:
 
 st.sidebar.markdown("""
 <div class="sb-credit">
-  <div class="name">Abdul Hadi</div>
-  <div class="sub">2025 (S)&nbsp;·&nbsp;CYS 90</div>
-  <div class="tag">Designed &amp; Developed</div>
+  <div class="sb-credit-name">Abdul Hadi</div>
+  <div class="sb-credit-sub">2025 (S) &nbsp;·&nbsp; CYS 90</div>
+  <div class="sb-credit-tag">Designed &amp; Developed</div>
 </div>
 """, unsafe_allow_html=True)
 
-
-# ══════════════════════════════════════════════════════════════════
-# STUDENT
-# ══════════════════════════════════════════════════════════════════
 if role == "Student":
     hall     = st.sidebar.selectbox("Select Hall", halls)
     all_data = load_all_sheets_data()
@@ -988,12 +992,12 @@ if role == "Student":
 
         student_card(room, name, row["Food_Dues"], row["Service_Charges"], row["Previous"], total, paid_amount)
 
-        with st.expander(f"Submit Receipt — Room {room}  ·  {name}"):
+        with st.expander(f"Receipt Upload  |  Room {room}  |  {name}"):
             uploaded_files = st.file_uploader("Upload receipt image(s)", accept_multiple_files=True, key=f"files_{room}_{idx}")
             amount_paid_input = st.number_input("Amount Submitted (Rs)", min_value=1, max_value=int(total), value=int(total), step=1, key=f"amt_{room}_{idx}")
 
             if uploaded_files:
-                if st.button(f"Submit Receipt — Room {room}", key=f"submit_{room}_{idx}"):
+                if st.button(f"Submit Receipt  |  Room {room}", key=f"submit_{room}_{idx}"):
                     invalidate_cache()
                     fresh_all        = load_all_sheets_data()
                     current_payments = get_payments_from_cache(fresh_all, hall)
@@ -1002,6 +1006,8 @@ if role == "Student":
                         file_bytes = f.getvalue()
                         file_hash  = hashlib.md5(file_bytes).hexdigest()
                         now_str    = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        file_ext   = os.path.splitext(f.name)[-1].lower().strip(".")
+
                         if not current_payments.empty and "File_Hash" in current_payments.columns:
                             dup = current_payments[
                                 (current_payments["RoomNo"].astype(str).str.strip() == room) &
@@ -1012,12 +1018,15 @@ if role == "Student":
                             if not dup.empty:
                                 errors.append(f"Duplicate receipt: {f.name}")
                                 continue
-                        save_path = f"receipts/{uuid.uuid4()}_{f.name}"
-                        with open(save_path,"wb") as fp: fp.write(file_bytes)
+
+                        import base64
+                        b64_data = base64.b64encode(file_bytes).decode("utf-8")
+
                         new_row = pd.DataFrame([{
                             "Month":selected_month,"RoomNo":room,"Name":name,
                             "Amount_Paid":amount_paid_input,"Submission_Date":now_str,
-                            "Receipt_File":save_path,"File_Hash":file_hash
+                            "Receipt_B64":b64_data,"Receipt_Ext":file_ext,
+                            "File_Hash":file_hash
                         }])
                         current_payments = pd.concat([current_payments, new_row], ignore_index=True)
                         added += 1
@@ -1211,15 +1220,40 @@ elif role == "Hall Admin":
             else:
                 filtered_pays = payments
             section_label(f"All Receipts — {len(filtered_pays)} submissions")
+            import base64 as _b64
             for i,row in filtered_pays.iterrows():
                 receipt_card(row["RoomNo"],row["Name"],row.get("Amount_Paid",""),row.get("Submission_Date",""),i)
-                path = str(row.get("Receipt_File",""))
-                if path and os.path.exists(path):
-                    if path.lower().endswith((".png",".jpg",".jpeg")): st.image(path, width=220)
+                b64  = str(row.get("Receipt_B64","")).strip()
+                ext  = str(row.get("Receipt_Ext","jpg")).strip().lower()
+                path = str(row.get("Receipt_File","")).strip()
+
+                # Try base64 first (new system — permanent)
+                if b64 and len(b64) > 100:
+                    try:
+                        img_bytes = _b64.b64decode(b64)
+                        mime = "image/png" if ext=="png" else "image/jpeg"
+                        if ext in ("png","jpg","jpeg","webp"):
+                            st.image(img_bytes, width=260)
+                        st.download_button(
+                            "Download Receipt", img_bytes,
+                            file_name=f"receipt_{row['RoomNo']}_{row['Name']}.{ext}",
+                            mime=mime, key=f"dl_{i}"
+                        )
+                    except Exception:
+                        st.caption("Could not decode receipt image.")
+                # Fallback: old file-based system
+                elif path and os.path.exists(path):
+                    if path.lower().endswith((".png",".jpg",".jpeg",".webp")):
+                        st.image(path, width=260)
                     with open(path,"rb") as fp:
                         st.download_button("Download Receipt", fp, file_name=os.path.basename(path), key=f"dl_{i}")
                 else:
-                    st.caption("Receipt image not available on server (cloud restart clears uploaded files)")
+                    st.markdown("""
+<div style="background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.2);
+            border-radius:10px;padding:10px 14px;font-size:0.8rem;color:#fb7185;">
+  Receipt image not available — this receipt was submitted before the permanent storage update.
+  New receipts are stored permanently in Google Sheets.
+</div>""", unsafe_allow_html=True)
 
     with tab5:
         if dues.empty:
@@ -1469,44 +1503,14 @@ elif role == "Senior Warden":
 # FOOTER
 # ══════════════════════════════════════════════════════════════════
 st.markdown("""
-<div style="
-  margin-top:3.5rem;
-  padding:1.6rem 2.25rem;
-  background:var(--glass);
-  border:1px solid var(--glass-b);
-  border-radius:var(--radius-lg);
-  backdrop-filter:blur(20px);
-  box-shadow:var(--shadow);
-  display:flex;justify-content:space-between;align-items:center;
-  flex-wrap:wrap;gap:12px;
-  position:relative;overflow:hidden;">
-  <div style="position:absolute;top:0;left:0;right:0;height:1px;
-              background:linear-gradient(90deg,transparent,rgba(99,102,241,0.4),rgba(139,92,246,0.35),transparent);"></div>
+<div class="footer">
   <div>
-    <div style="
-      font-family:'Space Grotesk',sans-serif;
-      font-size:0.95rem;font-weight:800;
-      background:linear-gradient(135deg,#a5b4fc,#c4b5fd);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-      background-clip:text;letter-spacing:-0.01em;">
-      University Mess Dues System
-    </div>
-    <div style="font-size:0.76rem;color:var(--text-3);margin-top:3px;">
-      Powered by Streamlit &amp; Google Sheets
-    </div>
+    <div class="footer-title">University Mess Dues System</div>
+    <div class="footer-sub">Powered by Streamlit &amp; Google Sheets</div>
   </div>
   <div style="text-align:right;">
-    <div style="
-      font-family:'Space Grotesk',sans-serif;
-      font-size:0.88rem;font-weight:800;
-      background:linear-gradient(135deg,#6366f1,#a5b4fc);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-      background-clip:text;">
-      Designed &amp; Developed by Abdul Hadi
-    </div>
-    <div style="font-size:0.72rem;color:var(--text-3);margin-top:4px;letter-spacing:0.03em;">
-      2025 (S)&nbsp;&nbsp;·&nbsp;&nbsp;CYS 90&nbsp;&nbsp;·&nbsp;&nbsp;University of Engineering &amp; Technology
-    </div>
+    <div class="footer-by">Designed &amp; Developed by Abdul Hadi</div>
+    <div class="footer-meta">2025 (S)&nbsp;&nbsp;·&nbsp;&nbsp;CYS 90&nbsp;&nbsp;·&nbsp;&nbsp;University of Engineering &amp; Technology</div>
   </div>
 </div>
 """, unsafe_allow_html=True)
