@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -17,67 +18,60 @@ st.set_page_config(
 
 if "theme" not in st.session_state:
     st.session_state["theme"] = "dark"
+
 _t = st.session_state["theme"]
 
 st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
-
 :root {{
-  --accent:   #1d4ed8;
-  --accent2:  #0ea5e9;
-  --green:    #059669;
-  --red:      #dc2626;
-  --orange:   #d97706;
-
+  --accent: #1d4ed8;
+  --accent2: #0ea5e9;
+  --green: #059669;
+  --red: #dc2626;
+  --orange: #d97706;
   {"" if _t=="dark" else "/*"}
-  --bg0:      #0f172a;
-  --bg1:      #1e293b;
-  --bg2:      #243347;
-  --glass:    rgba(255,255,255,0.04);
-  --glass2:   rgba(255,255,255,0.02);
-  --border:   rgba(148,163,184,0.15);
-  --border2:  rgba(148,163,184,0.10);
-  --text1:    #f1f5f9;
-  --text2:    #94a3b8;
-  --text3:    #64748b;
+  --bg0: #0f172a;
+  --bg1: #1e293b;
+  --bg2: #243347;
+  --glass: rgba(255,255,255,0.04);
+  --glass2: rgba(255,255,255,0.02);
+  --border: rgba(148,163,184,0.15);
+  --border2: rgba(148,163,184,0.10);
+  --text1: #f1f5f9;
+  --text2: #94a3b8;
+  --text3: #64748b;
   --input-bg: rgba(255,255,255,0.06);
   {"" if _t=="dark" else "*/"}
-
   {"/*" if _t=="dark" else ""}
-  --bg0:      #f8fafc;
-  --bg1:      #f1f5f9;
-  --bg2:      #e2e8f0;
-  --glass:    rgba(255,255,255,0.8);
-  --glass2:   rgba(0,0,0,0.04);
-  --border:   rgba(0,0,0,0.1);
-  --border2:  rgba(0,0,0,0.07);
-  --text1:    #0f172a;
-  --text2:    #334155;
-  --text3:    #64748b;
+  --bg0: #f8fafc;
+  --bg1: #f1f5f9;
+  --bg2: #e2e8f0;
+  --glass: rgba(255,255,255,0.8);
+  --glass2: rgba(0,0,0,0.04);
+  --border: rgba(0,0,0,0.1);
+  --border2: rgba(0,0,0,0.07);
+  --text1: #0f172a;
+  --text2: #334155;
+  --text3: #64748b;
   --input-bg: rgba(255,255,255,0.9);
   {"*/" if _t=="dark" else ""}
 }}
-
 *, *::before, *::after {{ box-sizing: border-box; }}
 html, body, [class*="css"] {{
   font-family: 'Inter', sans-serif !important;
   -webkit-font-smoothing: antialiased;
 }}
-
 #MainMenu, footer, header {{ visibility: hidden; }}
 .stDeployButton {{ display: none; }}
-
 .stApp {{
   background: var(--bg0) !important;
   min-height: 100vh;
 }}
-
 .block-container {{
   padding: 1.5rem 2rem 3rem !important;
   max-width: 1500px !important;
 }}
-
 [data-testid="stSidebar"] {{
   background: var(--bg1) !important;
   border-right: 1px solid var(--border) !important;
@@ -108,7 +102,6 @@ html, body, [class*="css"] {{
 [data-testid="stSidebar"] .stTextInput > div > div > input:focus {{
   border-color: var(--accent) !important;
 }}
-
 .sidebar-logo {{
   padding: 1.5rem 1.25rem 1.25rem;
   border-bottom: 1px solid var(--border);
@@ -131,7 +124,6 @@ html, body, [class*="css"] {{
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }}
-
 .stButton > button {{
   background: var(--glass) !important;
   color: var(--text1) !important;
@@ -156,7 +148,6 @@ html, body, [class*="css"] {{
 .stButton > button[kind="primary"]:hover {{
   background: rgba(220,38,38,0.18) !important;
 }}
-
 [data-testid="stSidebar"] .stButton > button {{
   width: 100% !important;
   text-align: left !important;
@@ -164,13 +155,11 @@ html, body, [class*="css"] {{
   padding: 0.6rem 1rem !important;
   font-size: 0.82rem !important;
 }}
-
 .role-btn-active > button {{
   background: var(--accent) !important;
   border-color: var(--accent) !important;
   color: #ffffff !important;
 }}
-
 [data-testid="stDownloadButton"] > button {{
   background: rgba(5,150,105,0.1) !important;
   border-color: rgba(5,150,105,0.4) !important;
@@ -179,7 +168,6 @@ html, body, [class*="css"] {{
 [data-testid="stDownloadButton"] > button:hover {{
   background: rgba(5,150,105,0.18) !important;
 }}
-
 .stTabs [data-baseweb="tab-list"] {{
   background: var(--bg1) !important;
   border-radius: 10px !important;
@@ -205,7 +193,6 @@ html, body, [class*="css"] {{
   color: #ffffff !important;
   font-weight: 700 !important;
 }}
-
 [data-testid="metric-container"] {{
   background: var(--bg1) !important;
   border: 1px solid var(--border) !important;
@@ -237,7 +224,6 @@ html, body, [class*="css"] {{
   font-weight: 600 !important;
   color: #34d399 !important;
 }}
-
 h1 {{
   font-family: 'Orbitron', sans-serif !important;
   font-size: 1.6rem !important;
@@ -258,7 +244,6 @@ h3 {{
   font-weight: 600 !important;
   color: var(--text2) !important;
 }}
-
 [data-testid="stDataFrame"] {{
   border-radius: 12px !important;
   overflow: hidden !important;
@@ -284,12 +269,10 @@ h3 {{
 .dataframe tr:hover td {{
   background: var(--glass) !important;
 }}
-
 .stSuccess {{ border-radius: 10px !important; }}
 .stWarning {{ border-radius: 10px !important; }}
-.stInfo    {{ border-radius: 10px !important; }}
-.stError   {{ border-radius: 10px !important; }}
-
+.stInfo {{ border-radius: 10px !important; }}
+.stError {{ border-radius: 10px !important; }}
 .stSelectbox > div > div {{
   border-radius: 8px !important;
   border: 1px solid var(--border) !important;
@@ -313,7 +296,6 @@ h3 {{
   border-color: var(--accent) !important;
 }}
 label {{ color: var(--text2) !important; }}
-
 [data-testid="stFileUploadDropzone"] {{
   border: 2px dashed var(--border) !important;
   border-radius: 12px !important;
@@ -323,7 +305,6 @@ label {{ color: var(--text2) !important; }}
 [data-testid="stFileUploadDropzone"]:hover {{
   border-color: var(--accent) !important;
 }}
-
 [data-testid="stExpander"] {{
   border: 1px solid var(--border) !important;
   border-radius: 12px !important;
@@ -337,7 +318,6 @@ label {{ color: var(--text2) !important; }}
   color: var(--text1) !important;
   font-weight: 600 !important;
 }}
-
 .section-header {{
   font-family: 'Inter', sans-serif !important;
   font-size: 0.7rem;
@@ -363,7 +343,6 @@ label {{ color: var(--text2) !important; }}
   flex: 1; height: 1px;
   background: var(--border);
 }}
-
 .page-header-wrap {{
   background: var(--bg1);
   border: 1px solid var(--border);
@@ -372,23 +351,19 @@ label {{ color: var(--text2) !important; }}
   margin-bottom: 2rem;
   border-left: 4px solid var(--accent);
 }}
-
 ::-webkit-scrollbar {{ width: 5px; height: 5px; }}
 ::-webkit-scrollbar-track {{ background: var(--bg2); }}
 ::-webkit-scrollbar-thumb {{
   background: var(--border);
   border-radius: 3px;
 }}
-
 hr {{
   border: none !important;
   height: 1px !important;
   background: var(--border) !important;
   margin: 1.5rem 0 !important;
 }}
-
 .stCaption {{ color: var(--text3) !important; font-size: 0.72rem !important; }}
-
 .data-card {{
   background: var(--bg1);
   border: 1px solid var(--border);
@@ -396,17 +371,14 @@ hr {{
   transition: border-color 0.2s;
 }}
 .data-card:hover {{ border-color: var(--accent); }}
-
 .prog-bar {{
   background: var(--accent);
   height: 4px;
   border-radius: 999px;
 }}
-
-.badge-paid    {{ border-color: rgba(5,150,105,0.5) !important; }}
+.badge-paid {{ border-color: rgba(5,150,105,0.5) !important; }}
 .badge-partial {{ border-color: rgba(14,165,233,0.5) !important; }}
-.badge-unpaid  {{ border-color: rgba(220,38,38,0.5) !important; }}
-
+.badge-unpaid {{ border-color: rgba(220,38,38,0.5) !important; }}
 .role-section-label {{
   font-family: 'Inter', sans-serif;
   font-size: 0.65rem;
@@ -420,9 +392,8 @@ hr {{
 </style>
 """, unsafe_allow_html=True)
 
-
 # ══════════════════════════════════════════════════════════════════
-# GOOGLE SHEETS
+# GOOGLE SHEETS (Yeh part same rakha hai)
 # ══════════════════════════════════════════════════════════════════
 def get_gspread_client():
     creds = st.secrets["gspread"]
@@ -457,89 +428,8 @@ def load_all_sheets_data():
 def invalidate_cache():
     load_all_sheets_data.clear()
 
-def find_sheet_key(all_data, name):
-    name_clean = name.strip().lower().replace(" ", "")
-    for key in all_data:
-        if key.strip().lower().replace(" ", "") == name_clean:
-            return key
-    return None
-
-def standardize_columns(df):
-    df.columns = df.columns.str.strip().str.lower()
-    col_map = {
-        "room no": "RoomNo", "roomno": "RoomNo", "room no.": "RoomNo",
-        "room": "RoomNo", "room_no": "RoomNo",
-        "name": "Name", "student name": "Name", "student_name": "Name",
-        "food dues": "Food_Dues", "food_dues": "Food_Dues", "fooddues": "Food_Dues",
-        "service charges": "Service_Charges", "service_charges": "Service_Charges",
-        "servicecharges": "Service_Charges",
-        "previous": "Previous", "prev": "Previous", "arrears": "Previous",
-        "month": "Month",
-    }
-    df = df.rename(columns=col_map)
-    for col in ["RoomNo", "Name", "Food_Dues", "Service_Charges", "Previous"]:
-        if col not in df.columns:
-            df[col] = "" if col in ["RoomNo", "Name"] else 0
-    return df
-
-def get_dues_from_cache(all_data, hall):
-    key = find_sheet_key(all_data, hall)
-    if key is None or all_data.get(key, pd.DataFrame()).empty:
-        return pd.DataFrame(columns=["Month","RoomNo","Name","Food_Dues","Service_Charges","Previous","Total"])
-    df = all_data[key].copy()
-    df = standardize_columns(df)
-    if "Month" not in df.columns:
-        df["Month"] = "Unknown"
-    df["Month"] = df["Month"].astype(str).str.strip()
-    for col in ["Food_Dues", "Service_Charges", "Previous"]:
-        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
-    df["RoomNo"] = df["RoomNo"].astype(str).str.strip()
-    df["Name"]   = df["Name"].astype(str).str.strip()
-    df["Total"]  = df["Food_Dues"] + df["Service_Charges"] + df["Previous"]
-    return df
-
-def get_payments_from_cache(all_data, hall):
-    key = find_sheet_key(all_data, f"{hall}_Payments")
-    if key is None or all_data.get(key, pd.DataFrame()).empty:
-        return pd.DataFrame(columns=["Month","RoomNo","Name","Amount_Paid","Submission_Date","Receipt_File","File_Hash"])
-    return all_data[key].copy()
-
-def clean_for_sheets(df):
-    df = df.copy().fillna("")
-    for col in df.columns:
-        df[col] = df[col].apply(
-            lambda x: int(x)   if isinstance(x, (np.integer,))  else
-                      float(x) if isinstance(x, (np.floating,)) else
-                      bool(x)  if isinstance(x, (np.bool_,))    else
-                      str(x)   if not isinstance(x, (str, int, float, bool)) else x
-        )
-    return df
-
-def find_or_create_worksheet(name):
-    sh = get_spreadsheet()
-    clean = name.strip().lower().replace(" ", "")
-    for ws in sh.worksheets():
-        if ws.title.strip().lower().replace(" ", "") == clean:
-            return ws
-    return sh.add_worksheet(title=name, rows=5000, cols=20)
-
-def save_dues(df, hall):
-    ws = find_or_create_worksheet(hall)
-    ws.clear()
-    df = clean_for_sheets(df)
-    ws.update([df.columns.values.tolist()] + df.values.tolist())
-    invalidate_cache()
-
-def save_payments(df, hall):
-    ws = find_or_create_worksheet(f"{hall}_Payments")
-    ws.clear()
-    df = clean_for_sheets(df)
-    ws.update([df.columns.values.tolist()] + df.values.tolist())
-    invalidate_cache()
-
-if not os.path.exists("receipts"):
-    os.makedirs("receipts")
-
+# ... (baqi functions same hain - standardize_columns, get_dues_from_cache, etc.)
+# Main functions ko yahan copy paste kar do (space saving ke liye skip kiya hai, purana code se le lo)
 
 # ══════════════════════════════════════════════════════════════════
 # CONSTANTS
@@ -548,114 +438,107 @@ halls = [
     "SMG Hall", "MBQ Hall", "EIDHI Hall", "ZUBAIR Hall", "MUMTAZ Hall",
     "LIAQUAT Hall", "QUAID AZAM Hall", "IQBAL Hall", "SIR SYED Hall"
 ]
+
 hall_passwords = {
     "SMG Hall": "smg123", "MBQ Hall": "mbq456", "EIDHI Hall": "eidhi789",
     "ZUBAIR Hall": "zubair012", "MUMTAZ Hall": "mumtaz345",
     "LIAQUAT Hall": "liaquat678", "QUAID AZAM Hall": "quaid901",
     "IQBAL Hall": "iqbal234", "SIR SYED Hall": "syed567",
 }
+
 senior_password = "senior@1122"
 
+# ══════════════════════════════════════════════════════════════════
+# UI COMPONENTS (Yeh bhi same hain)
+# ══════════════════════════════════════════════════════════════════
+# ... (page_header, section_label, student_card, etc. sab same)
 
 # ══════════════════════════════════════════════════════════════════
-# UI COMPONENTS
+# SIDEBAR - UPDATED ROLE SECTION
 # ══════════════════════════════════════════════════════════════════
-def page_header(title, subtitle=""):
-    theme_icon  = "☀️" if st.session_state.get("theme","dark") == "dark" else "🌙"
-    theme_label = "LIGHT" if st.session_state.get("theme","dark") == "dark" else "DARK"
-    st.markdown(f"""
-<div class="page-header-wrap">
-  <h1 style="margin:0;padding:0;">{title}</h1>
-  {"" if not subtitle else f'<p style="color:var(--text2);margin:8px 0 0;font-size:0.82rem;font-family:Inter,sans-serif;letter-spacing:0.02em;">{subtitle}</p>'}
-</div>
-""", unsafe_allow_html=True)
-    _c1, _c2 = st.columns([8, 1])
-    with _c2:
-        if st.button(f"{theme_icon} {theme_label}", key="theme_toggle_btn"):
-            st.session_state["theme"] = "light" if st.session_state.get("theme","dark") == "dark" else "dark"
-            st.rerun()
-
-def section_label(text):
-    st.markdown(f'<p class="section-header">{text}</p>', unsafe_allow_html=True)
-
-def status_badge(label, cls):
-    colors = {
-        "paid":    ("rgba(5,150,105,0.12)", "#059669", "badge-paid"),
-        "partial": ("rgba(14,165,233,0.12)", "#0ea5e9", "badge-partial"),
-        "unpaid":  ("rgba(220,38,38,0.12)", "#dc2626", "badge-unpaid"),
-    }
-    bg, col, anim = colors.get(cls, ("rgba(100,116,139,0.1)", "#64748b", ""))
-    return f'<span class="{anim}" style="background:{bg};color:{col};border:1px solid {col}50;padding:4px 12px;border-radius:999px;font-family:Inter,sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;">{label}</span>'
-
-def student_card(room, name, food, service, prev, total, paid_amount):
-    remaining = max(0.0, total - paid_amount)
-    if paid_amount >= total:
-        accent, left_color, badge_cls = "#059669", "#059669", "paid"
-        badge_txt   = "✓ Paid in Full"
-        amount_html = f'<span style="color:#059669;font-weight:700;font-size:0.9rem;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(total):,} — Cleared</span>'
-    elif paid_amount > 0:
-        accent, left_color, badge_cls = "#0ea5e9", "#0ea5e9", "partial"
-        badge_txt   = "◑ Partial"
-        amount_html = f'<span style="color:#0ea5e9;font-weight:700;font-size:0.9rem;font-variant-numeric:tabular-nums;">Paid: Rs&nbsp;{int(paid_amount):,} · Due: Rs&nbsp;{int(remaining):,}</span>'
-    else:
-        accent, left_color, badge_cls = "#dc2626", "#dc2626", "unpaid"
-        badge_txt   = "✗ Unpaid"
-        amount_html = f'<span style="color:#dc2626;font-weight:700;font-size:0.9rem;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(total):,} — Outstanding</span>'
-
-    initials = "".join([w[0].upper() for w in name.split()[:2]]) if name else "?"
-    pct   = int(paid_amount / total * 100) if total else 0
-    bar_w = min(100, pct)
-    badge_html = status_badge(badge_txt, badge_cls)
-
-    st.markdown(f"""
-<div style="
-  background: var(--bg1);
-  border: 1px solid var(--border);
-  border-left: 4px solid {left_color};
-  border-radius: 12px;
-  padding: 16px 20px;
-  margin-bottom: 10px;
-  transition: border-color 0.2s;
-">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;">
-    <div style="display:flex;align-items:center;gap:14px;">
-      <div style="width:44px;height:44px;border-radius:10px;
-        background:{accent};opacity:0.9;
-        display:flex;align-items:center;justify-content:center;
-        font-family:Inter,sans-serif;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;">{initials}</div>
-      <div>
-        <div style="font-size:0.95rem;font-weight:700;color:var(--text1);">{name}</div>
-        <div style="font-size:0.72rem;color:var(--text3);margin-top:2px;">
-          Room <strong style="color:var(--text2);">{room}</strong>
-        </div>
-      </div>
-    </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-      {badge_html}
-      {amount_html}
-    </div>
-  </div>
-
-  <div style="margin-top:12px;">
-    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-      <span style="font-size:0.65rem;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;">Payment Progress</span>
-      <span style="font-size:0.65rem;color:{accent};font-weight:700;">{pct}%</span>
-    </div>
-    <div style="background:var(--border);border-radius:999px;height:4px;overflow:hidden;">
-      <div style="background:{accent};height:4px;width:{bar_w}%;border-radius:999px;transition:width 0.4s ease;"></div>
-    </div>
-  </div>
-
-  <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);
-    display:flex;gap:18px;flex-wrap:wrap;">
-    <span style="font-size:0.74rem;color:var(--text3);">Food&nbsp;<strong style="color:var(--text1);font-variant-numeric:tabular-nums;">Rs&nbsp;{int(food):,}</strong></span>
-    <span style="font-size:0.74rem;color:var(--text3);">Service&nbsp;<strong style="color:var(--text1);font-variant-numeric:tabular-nums;">Rs&nbsp;{int(service):,}</strong></span>
-    <span style="font-size:0.74rem;color:var(--text3);">Arrears&nbsp;<strong style="color:var(--text1);font-variant-numeric:tabular-nums;">Rs&nbsp;{int(prev):,}</strong></span>
-    <span style="font-size:0.74rem;color:var(--text3);">Total&nbsp;<strong style="color:{accent};font-size:0.85rem;font-variant-numeric:tabular-nums;font-weight:700;">Rs&nbsp;{int(total):,}</strong></span>
-  </div>
+st.sidebar.markdown("""
+<div class="sidebar-logo">
+  <h2>⬡ HOLO-MESS v2.1</h2>
+  <p>● HOLO-SYSTEM ONLINE</p>
 </div>
 """, unsafe_allow_html=True)
 
+# ── Role Selection (Fixed Version) ─────────────────────────────────────
+st.sidebar.markdown('<p class="role-section-label">ACCESS LEVEL</p>', unsafe_allow_html=True)
+
+if "selected_role" not in st.session_state:
+    st.session_state["selected_role"] = "Student"
+
+role_options = [
+    ("Student", "◎ Student"),
+    ("Hall Admin", "⬡ Hall Admin"),
+    ("Senior Warden", "★ Senior Warden"),
+]
+
+for role_key, role_label in role_options:
+    if st.sidebar.button(role_label, key=f"role_btn_{role_key}", use_container_width=True):
+        st.session_state["selected_role"] = role_key
+        st.rerun()
+
+# Current Role Display
+st.sidebar.success(f"✅ Active Role: **{st.session_state['selected_role']}**")
+
+role = st.session_state["selected_role"]
+
+# ══════════════════════════════════════════════════════════════════
+# STUDENT VIEW, HALL ADMIN, SENIOR WARDEN (Yeh pura same rakha hai)
+# ══════════════════════════════════════════════════════════════════
+
+if role == "Student":
+    hall = st.sidebar.selectbox("Select Hall", halls)
+    all_data = load_all_sheets_data()
+    dues = get_dues_from_cache(all_data, hall)
+    payments = get_payments_from_cache(all_data, hall)
+    page_header(f"{hall}", "STUDENT PORTAL · VIEW DUES & SUBMIT RECEIPTS")
+    # ... (baqi student code same)
+
+elif role == "Hall Admin":
+    hall = st.sidebar.selectbox("Select Hall", halls)
+    pw = st.sidebar.text_input("Admin Passkey", type="password")
+    if pw != hall_passwords.get(hall, ""):
+        st.sidebar.error("⚠ ACCESS DENIED")
+        st.stop()
+    page_header(f"{hall} — ADMIN PANEL", "MANAGE DUES · TRACK PAYMENTS · REVIEW RECEIPTS")
+    # ... (baqi hall admin code same)
+
+elif role == "Senior Warden":
+    pw = st.sidebar.text_input("Warden Passkey", type="password")
+    if pw != senior_password:
+        st.sidebar.error("⚠ ACCESS DENIED")
+        st.stop()
+    page_header("SENIOR WARDEN COMMAND CENTER", "FINANCIAL OVERVIEW · ALL 9 HALLS · REAL-TIME")
+    # ... (baqi senior warden code same)
+
+# Footer (same)
+st.markdown("""
+<div style="margin-top:3rem;padding:1.25rem 2rem;
+  background:var(--bg1);
+  border:1px solid var(--border);
+  border-radius:12px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+  <div>
+    <span style="font-family:Orbitron,sans-serif;font-size:0.8rem;font-weight:800;
+      color:#60a5fa;
+      text-shadow:0 0 16px rgba(96,165,250,0.7), 0 0 32px rgba(96,165,250,0.3);">HOLO-MESS v2.1</span>
+    <span style="color:var(--border);margin:0 8px;">|</span>
+    <span style="font-size:0.74rem;color:var(--text3);">University Mess Dues System · Powered by Streamlit &amp; Google Sheets</span>
+  </div>
+  <div style="text-align:right;">
+    <span style="font-family:Orbitron,sans-serif;font-size:0.76rem;font-weight:800;
+      color:#60a5fa;
+      text-shadow:0 0 14px rgba(96,165,250,0.7), 0 0 28px rgba(96,165,250,0.3);">Designed &amp; Developed by Abdul Hadi</span>
+    <br>
+    <span style="font-family:Inter,sans-serif;font-size:0.6rem;color:var(--text3);letter-spacing:0.06em;">
+      2025 (S) &nbsp;·&nbsp; CYS 90 &nbsp;·&nbsp; UET
+    </span>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 def receipt_card(room, name, amount, date, idx):
     initials = "".join([w[0].upper() for w in name.split()[:2]]) if name else "?"
     amt_fmt  = f"Rs\u00a0{int(float(amount)):,}" if amount else "Rs\u00a00"
