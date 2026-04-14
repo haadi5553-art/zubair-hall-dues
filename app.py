@@ -740,36 +740,34 @@ st.sidebar.markdown("""
 """, unsafe_allow_html=True)
 
 # ── Role Selection Buttons ─────────────────────────────────────
-st.sidebar.markdown('<p class="role-section-label">Access Level</p>', unsafe_allow_html=True)
+# ── Role Selection ─────────────────────────────────────
+st.sidebar.markdown('<p class="role-section-label">ACCESS LEVEL</p>', unsafe_allow_html=True)
 
 if "selected_role" not in st.session_state:
     st.session_state["selected_role"] = "Student"
 
 role_options = [
-    ("Student",        "◎  Student"),
-    ("Hall Admin",     "⬡  Hall Admin"),
-    ("Senior Warden",  "★  Senior Warden"),
+    ("Student", "◎ Student"),
+    ("Hall Admin", "⬡ Hall Admin"),
+    ("Senior Warden", "★ Senior Warden"),
 ]
 
 for role_key, role_label in role_options:
     is_active = st.session_state["selected_role"] == role_key
-    if is_active:
-        st.sidebar.markdown(f"""
-<style>
-div[data-testid="stSidebar"] div[data-testid="stButton"]:has(button[key="role_btn_{role_key}"]) button,
-div[data-testid="stSidebar"] button[aria-label="{role_label}"] {{
-  background: var(--accent) !important;
-  border-color: #1d4ed8 !important;
-  color: #ffffff !important;
-}}
-</style>
-""", unsafe_allow_html=True)
-    if st.sidebar.button(role_label, key=f"role_btn_{role_key}", use_container_width=True):
+    
+    if st.sidebar.button(
+        role_label, 
+        key=f"role_btn_{role_key}", 
+        use_container_width=True,
+        type="primary" if is_active else "secondary"
+    ):
         st.session_state["selected_role"] = role_key
         st.rerun()
 
-role = st.session_state["selected_role"]
+# Show current active role
+st.sidebar.success(f"✅ Active: **{st.session_state['selected_role']}**")
 
+role = st.session_state["selected_role"]
 st.sidebar.markdown("""
 <div style="padding:14px 12px;margin-top:10px;
   border-top:1px solid var(--border);text-align:center;">
