@@ -6,11 +6,7 @@ from google.oauth2.service_account import Credentials
 import uuid, hashlib, os
 import numpy as np
 
-try:
-    from streamlit_autorefresh import st_autorefresh
-    AUTO_REFRESH = True
-except ImportError:
-    AUTO_REFRESH = False
+AUTO_REFRESH = False
 
 st.set_page_config(
     page_title="HOLO-MESS v2.1 | UET",
@@ -32,40 +28,46 @@ st.markdown(f"""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 
 :root {{
-  --cyan:     #00f5ff;
-  --magenta:  #ff00ff;
-  --green:    #00ff9d;
-  --purple:   #bf5af2;
-  --orange:   #ff6b35;
-  --yellow:   #ffe600;
+  --accent:   #1d4ed8;
+  --accent2:  #0ea5e9;
+  --green:    #059669;
+  --red:      #dc2626;
+  --orange:   #d97706;
 
   {"" if _t=="dark" else "/*"}
-  --bg0:      #00000a;
-  --bg1:      #05050f;
-  --bg2:      #0a0a1a;
-  --glass:    rgba(0,245,255,0.04);
-  --glass2:   rgba(255,255,255,0.03);
-  --border:   rgba(0,245,255,0.15);
-  --border2:  rgba(255,0,255,0.12);
-  --text1:    #e0f7ff;
-  --text2:    #7ecfde;
-  --text3:    #3d7a8a;
-  --input-bg: rgba(0,245,255,0.05);
+  --bg0:      #0f172a;
+  --bg1:      #1e293b;
+  --bg2:      #243347;
+  --glass:    rgba(255,255,255,0.04);
+  --glass2:   rgba(255,255,255,0.02);
+  --border:   rgba(148,163,184,0.15);
+  --border2:  rgba(148,163,184,0.10);
+  --text1:    #f1f5f9;
+  --text2:    #94a3b8;
+  --text3:    #64748b;
+  --input-bg: rgba(255,255,255,0.06);
   {"" if _t=="dark" else "*/"}
 
   {"/*" if _t=="dark" else ""}
-  --bg0:      #e8f4ff;
-  --bg1:      #d0e8ff;
-  --bg2:      #c0dcff;
-  --glass:    rgba(255,255,255,0.6);
-  --glass2:   rgba(0,180,220,0.08);
-  --border:   rgba(0,150,200,0.25);
-  --border2:  rgba(120,0,200,0.2);
-  --text1:    #060a1a;
-  --text2:    #0a3a5c;
-  --text3:    #1a6a8a;
-  --input-bg: rgba(255,255,255,0.8);
+  --bg0:      #f8fafc;
+  --bg1:      #f1f5f9;
+  --bg2:      #e2e8f0;
+  --glass:    rgba(255,255,255,0.8);
+  --glass2:   rgba(0,0,0,0.04);
+  --border:   rgba(0,0,0,0.1);
+  --border2:  rgba(0,0,0,0.07);
+  --text1:    #0f172a;
+  --text2:    #334155;
+  --text3:    #64748b;
+  --input-bg: rgba(255,255,255,0.9);
   {"*/" if _t=="dark" else ""}
+}}
+
+*, *::before, *::after {{ box-sizing: border-box; }}
+
+html, body, [class*="css"] {{
+  font-family: 'Inter', sans-serif !important;
+  -webkit-font-smoothing: antialiased;
 }}
 
 *, *::before, *::after {{ box-sizing: border-box; }}
@@ -85,298 +87,185 @@ html, body, [class*="css"] {{
   min-height: 100vh;
 }}
 
-/* ── 3D Canvas background ── */
-#holo-canvas {{
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  z-index: 0;
-  pointer-events: none;
-}}
-
-/* ── Content above canvas ── */
+/* ── Content ── */
 .block-container {{
-  position: relative;
-  z-index: 1;
   padding: 1.5rem 2rem 3rem !important;
   max-width: 1500px !important;
 }}
 
-/* ══════════ ANIMATED TOP BAR ══════════ */
-.stApp::before {{
-  content: '';
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg,
-    var(--cyan), var(--magenta), var(--green),
-    var(--purple), var(--cyan));
-  background-size: 400% 100%;
-  animation: topbar 3s linear infinite;
-  z-index: 9999;
-  box-shadow: 0 0 20px var(--cyan), 0 0 40px var(--magenta);
-}}
-@keyframes topbar {{
-  0%   {{ background-position: 0% 0%; }}
-  100% {{ background-position: 400% 0%; }}
-}}
-
 /* ══════════ SIDEBAR ══════════ */
 [data-testid="stSidebar"] {{
-  background: linear-gradient(180deg, #02020e 0%, #070718 100%) !important;
+  background: var(--bg1) !important;
   border-right: 1px solid var(--border) !important;
-  box-shadow: 4px 0 40px rgba(0,245,255,0.08) !important;
 }}
 [data-testid="stSidebar"] > div:first-child {{ background: transparent !important; }}
 [data-testid="stSidebar"] * {{ color: var(--text1) !important; }}
 [data-testid="stSidebar"] label {{
-  color: var(--cyan) !important;
-  font-family: 'Orbitron', sans-serif !important;
-  font-size: 0.62rem !important;
+  color: var(--text2) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.72rem !important;
   font-weight: 600 !important;
-  letter-spacing: 0.15em !important;
+  letter-spacing: 0.04em !important;
   text-transform: uppercase !important;
 }}
 [data-testid="stSidebar"] .stSelectbox > div > div {{
-  background: rgba(0,245,255,0.05) !important;
-  border: 1px solid rgba(0,245,255,0.2) !important;
+  background: var(--input-bg) !important;
+  border: 1px solid var(--border) !important;
   border-radius: 8px !important;
   color: var(--text1) !important;
-  backdrop-filter: blur(10px);
   transition: all 0.2s;
 }}
 [data-testid="stSidebar"] .stSelectbox > div > div:focus-within {{
-  border-color: var(--cyan) !important;
-  box-shadow: 0 0 12px rgba(0,245,255,0.3) !important;
+  border-color: var(--accent) !important;
 }}
 [data-testid="stSidebar"] .stTextInput > div > div > input {{
-  background: rgba(0,245,255,0.05) !important;
-  border: 1px solid rgba(0,245,255,0.2) !important;
+  background: var(--input-bg) !important;
+  border: 1px solid var(--border) !important;
   border-radius: 8px !important;
   color: var(--text1) !important;
 }}
 [data-testid="stSidebar"] .stTextInput > div > div > input:focus {{
-  border-color: var(--cyan) !important;
-  box-shadow: 0 0 12px rgba(0,245,255,0.3) !important;
+  border-color: var(--accent) !important;
 }}
 
 /* ══════════ SIDEBAR LOGO ══════════ */
 .sidebar-logo {{
   padding: 1.5rem 1.25rem 1.25rem;
-  border-bottom: 1px solid rgba(0,245,255,0.1);
+  border-bottom: 1px solid var(--border);
   margin-bottom: 1.25rem;
-  background: linear-gradient(135deg, rgba(0,245,255,0.05), rgba(255,0,255,0.03));
-  position: relative;
-  overflow: hidden;
-}}
-.sidebar-logo::before {{
-  content: '';
-  position: absolute;
-  top: 0; left: -100%; width: 200%; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-  animation: scan 3s linear infinite;
-}}
-@keyframes scan {{
-  0%   {{ left: -100%; }}
-  100% {{ left: 100%; }}
 }}
 .sidebar-logo h2 {{
   font-family: 'Orbitron', sans-serif !important;
-  font-size: 0.9rem !important;
-  font-weight: 700 !important;
-  color: var(--cyan) !important;
-  letter-spacing: 0.05em;
-  text-shadow: 0 0 12px rgba(0,245,255,0.6);
+  font-size: 0.95rem !important;
+  font-weight: 800 !important;
+  color: #60a5fa !important;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 18px rgba(96,165,250,0.7), 0 0 36px rgba(96,165,250,0.35);
   margin: 0 !important;
 }}
 .sidebar-logo p {{
   font-size: 0.6rem !important;
-  color: var(--magenta) !important;
+  color: var(--text3) !important;
   margin-top: 4px !important;
-  font-family: 'Orbitron', sans-serif !important;
-  letter-spacing: 0.12em;
+  font-family: 'Inter', sans-serif !important;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  text-shadow: 0 0 8px rgba(255,0,255,0.5);
 }}
 
 /* ══════════ BUTTONS ══════════ */
 .stButton > button {{
-  background: linear-gradient(135deg,
-    rgba(0,245,255,0.12), rgba(191,90,242,0.12)) !important;
-  color: var(--cyan) !important;
+  background: var(--glass) !important;
+  color: var(--text1) !important;
   border: 1px solid var(--border) !important;
   border-radius: 8px !important;
-  font-family: 'Orbitron', sans-serif !important;
+  font-family: 'Inter', sans-serif !important;
   font-weight: 600 !important;
-  font-size: 0.72rem !important;
-  padding: 0.55rem 1.4rem !important;
-  letter-spacing: 0.08em !important;
-  transition: all 0.25s ease !important;
-  backdrop-filter: blur(10px) !important;
-  position: relative !important;
-  overflow: hidden !important;
-  text-transform: uppercase !important;
-}}
-.stButton > button::before {{
-  content: '';
-  position: absolute;
-  top: 0; left: -100%; width: 100%; height: 100%;
-  background: linear-gradient(90deg,
-    transparent, rgba(0,245,255,0.15), transparent);
-  transition: left 0.4s;
+  font-size: 0.8rem !important;
+  padding: 0.5rem 1.2rem !important;
+  transition: all 0.2s ease !important;
 }}
 .stButton > button:hover {{
-  border-color: var(--cyan) !important;
-  color: #fff !important;
-  box-shadow: 0 0 20px rgba(0,245,255,0.4),
-              inset 0 0 20px rgba(0,245,255,0.05) !important;
-  transform: translateY(-2px) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent2) !important;
+  transform: translateY(-1px) !important;
 }}
-.stButton > button:hover::before {{ left: 100%; }}
 .stButton > button[kind="primary"] {{
-  background: linear-gradient(135deg,
-    rgba(255,0,0,0.15), rgba(255,0,255,0.1)) !important;
-  border-color: rgba(255,50,50,0.4) !important;
-  color: #ff6b6b !important;
+  background: rgba(220,38,38,0.1) !important;
+  border-color: rgba(220,38,38,0.4) !important;
+  color: #f87171 !important;
 }}
 .stButton > button[kind="primary"]:hover {{
-  box-shadow: 0 0 20px rgba(255,0,80,0.4) !important;
-  color: #fff !important;
+  background: rgba(220,38,38,0.18) !important;
 }}
 
 /* ══════════ DOWNLOAD BUTTON ══════════ */
 [data-testid="stDownloadButton"] > button {{
-  background: linear-gradient(135deg,
-    rgba(0,255,157,0.1), rgba(0,200,120,0.08)) !important;
-  border-color: rgba(0,255,157,0.3) !important;
-  color: var(--green) !important;
+  background: rgba(5,150,105,0.1) !important;
+  border-color: rgba(5,150,105,0.4) !important;
+  color: #34d399 !important;
 }}
 [data-testid="stDownloadButton"] > button:hover {{
-  box-shadow: 0 0 20px rgba(0,255,157,0.4) !important;
+  background: rgba(5,150,105,0.18) !important;
 }}
 
 /* ══════════ TABS ══════════ */
 .stTabs [data-baseweb="tab-list"] {{
-  background: rgba(0,245,255,0.03) !important;
+  background: var(--bg1) !important;
   border-radius: 10px !important;
   padding: 5px !important;
   border: 1px solid var(--border) !important;
   gap: 3px !important;
-  backdrop-filter: blur(15px) !important;
 }}
 .stTabs [data-baseweb="tab"] {{
   border-radius: 7px !important;
-  font-family: 'Orbitron', sans-serif !important;
+  font-family: 'Inter', sans-serif !important;
   font-weight: 500 !important;
-  font-size: 0.65rem !important;
+  font-size: 0.78rem !important;
   color: var(--text2) !important;
   padding: 0.45rem 1rem !important;
-  letter-spacing: 0.08em !important;
   transition: all 0.2s !important;
-  text-transform: uppercase !important;
 }}
 .stTabs [data-baseweb="tab"]:hover {{
-  color: var(--cyan) !important;
-  background: rgba(0,245,255,0.06) !important;
+  color: var(--text1) !important;
+  background: var(--glass2) !important;
 }}
 .stTabs [aria-selected="true"] {{
-  background: linear-gradient(135deg,
-    rgba(0,245,255,0.15), rgba(191,90,242,0.1)) !important;
-  color: var(--cyan) !important;
+  background: var(--accent) !important;
+  color: #ffffff !important;
   font-weight: 700 !important;
-  border: 1px solid rgba(0,245,255,0.3) !important;
-  box-shadow: 0 0 15px rgba(0,245,255,0.2),
-              inset 0 0 10px rgba(0,245,255,0.05) !important;
-  text-shadow: 0 0 8px rgba(0,245,255,0.6) !important;
 }}
 
 /* ══════════ METRICS ══════════ */
 [data-testid="metric-container"] {{
-  background: linear-gradient(135deg,
-    rgba(0,245,255,0.05), rgba(191,90,242,0.04)) !important;
+  background: var(--bg1) !important;
   border: 1px solid var(--border) !important;
-  border-radius: 14px !important;
+  border-radius: 12px !important;
   padding: 1.25rem 1.5rem !important;
-  backdrop-filter: blur(20px) !important;
-  transition: all 0.3s ease !important;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 30px rgba(0,0,0,0.3),
-              inset 0 1px 0 rgba(0,245,255,0.1) !important;
-}}
-[data-testid="metric-container"]::before {{
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg,
-    transparent, var(--cyan), var(--magenta), transparent);
-  opacity: 0.6;
-}}
-[data-testid="metric-container"]::after {{
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 80% 20%,
-    rgba(0,245,255,0.06) 0%, transparent 60%);
-  pointer-events: none;
+  transition: all 0.2s ease !important;
 }}
 [data-testid="metric-container"]:hover {{
-  transform: translateY(-4px) !important;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.4),
-              0 0 30px rgba(0,245,255,0.15) !important;
-  border-color: rgba(0,245,255,0.35) !important;
+  transform: translateY(-2px) !important;
+  border-color: var(--accent) !important;
 }}
 [data-testid="stMetricValue"] {{
-  font-family: 'Orbitron', sans-serif !important;
-  font-size: 1.65rem !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 1.6rem !important;
   font-weight: 800 !important;
-  color: var(--cyan) !important;
-  letter-spacing: -0.02em !important;
-  text-shadow: 0 0 20px rgba(0,245,255,0.5) !important;
+  color: var(--text1) !important;
   -webkit-text-fill-color: initial !important;
 }}
 [data-testid="stMetricLabel"] {{
-  font-family: 'Orbitron', sans-serif !important;
-  font-size: 0.6rem !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.7rem !important;
   font-weight: 600 !important;
   color: var(--text3) !important;
-  letter-spacing: 0.14em !important;
+  letter-spacing: 0.06em !important;
   text-transform: uppercase !important;
 }}
 [data-testid="stMetricDelta"] {{
   font-size: 0.75rem !important;
   font-weight: 600 !important;
-  color: var(--green) !important;
+  color: #34d399 !important;
 }}
 
 /* ══════════ HEADINGS ══════════ */
 h1 {{
   font-family: 'Orbitron', sans-serif !important;
-  font-size: 1.7rem !important;
+  font-size: 1.6rem !important;
   font-weight: 900 !important;
-  color: var(--cyan) !important;
-  letter-spacing: 0.04em !important;
-  text-shadow: 0 0 30px rgba(0,245,255,0.4),
-               0 0 60px rgba(0,245,255,0.2) !important;
+  color: var(--text1) !important;
+  letter-spacing: 0.03em !important;
   -webkit-text-fill-color: initial !important;
-  animation: glitch-h1 8s infinite;
-}}
-@keyframes glitch-h1 {{
-  0%, 92%, 100% {{ text-shadow: 0 0 30px rgba(0,245,255,0.4); }}
-  93% {{ text-shadow: 3px 0 var(--magenta), -3px 0 var(--cyan); }}
-  94% {{ text-shadow: -3px 0 var(--magenta), 3px 0 var(--cyan); }}
-  95% {{ text-shadow: 0 0 30px rgba(0,245,255,0.4); }}
 }}
 h2 {{
-  font-family: 'Orbitron', sans-serif !important;
+  font-family: 'Inter', sans-serif !important;
   font-size: 1.1rem !important;
   font-weight: 700 !important;
   color: var(--text1) !important;
 }}
 h3 {{
-  font-family: 'Orbitron', sans-serif !important;
-  font-size: 0.88rem !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.9rem !important;
   font-weight: 600 !important;
   color: var(--text2) !important;
 }}
@@ -386,53 +275,33 @@ h3 {{
   border-radius: 12px !important;
   overflow: hidden !important;
   border: 1px solid var(--border) !important;
-  box-shadow: 0 4px 30px rgba(0,0,0,0.3),
-              0 0 20px rgba(0,245,255,0.05) !important;
 }}
 .dataframe thead th {{
-  background: rgba(0,245,255,0.08) !important;
-  font-family: 'Orbitron', sans-serif !important;
-  font-size: 0.6rem !important;
+  background: var(--bg2) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.72rem !important;
   font-weight: 700 !important;
-  color: var(--cyan) !important;
+  color: var(--text2) !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.1em !important;
+  letter-spacing: 0.06em !important;
   padding: 12px 14px !important;
   border-bottom: 1px solid var(--border) !important;
-  text-shadow: 0 0 8px rgba(0,245,255,0.4) !important;
 }}
 .dataframe td {{
   font-size: 0.84rem !important;
   color: var(--text1) !important;
   padding: 10px 14px !important;
-  border-bottom: 1px solid rgba(0,245,255,0.05) !important;
+  border-bottom: 1px solid var(--border2) !important;
 }}
 .dataframe tr:hover td {{
-  background: rgba(0,245,255,0.04) !important;
+  background: var(--glass) !important;
 }}
 
 /* ══════════ ALERTS ══════════ */
-.stSuccess {{
-  background: rgba(0,255,157,0.08) !important;
-  border: 1px solid rgba(0,255,157,0.3) !important;
-  border-radius: 10px !important;
-  color: var(--green) !important;
-}}
-.stWarning {{
-  background: rgba(255,230,0,0.08) !important;
-  border: 1px solid rgba(255,230,0,0.3) !important;
-  border-radius: 10px !important;
-}}
-.stInfo {{
-  background: rgba(0,245,255,0.06) !important;
-  border: 1px solid rgba(0,245,255,0.2) !important;
-  border-radius: 10px !important;
-}}
-.stError {{
-  background: rgba(255,50,50,0.08) !important;
-  border: 1px solid rgba(255,50,50,0.3) !important;
-  border-radius: 10px !important;
-}}
+.stSuccess {{ border-radius: 10px !important; }}
+.stWarning {{ border-radius: 10px !important; }}
+.stInfo    {{ border-radius: 10px !important; }}
+.stError   {{ border-radius: 10px !important; }}
 
 /* ══════════ INPUTS ══════════ */
 .stSelectbox > div > div {{
@@ -440,12 +309,10 @@ h3 {{
   border: 1px solid var(--border) !important;
   background: var(--input-bg) !important;
   color: var(--text1) !important;
-  backdrop-filter: blur(10px) !important;
   transition: all 0.2s !important;
 }}
 .stSelectbox > div > div:focus-within {{
-  border-color: var(--cyan) !important;
-  box-shadow: 0 0 15px rgba(0,245,255,0.25) !important;
+  border-color: var(--accent) !important;
 }}
 .stNumberInput > div > div > input,
 .stTextInput > div > div > input {{
@@ -457,122 +324,78 @@ h3 {{
 }}
 .stNumberInput > div > div > input:focus,
 .stTextInput > div > div > input:focus {{
-  border-color: var(--cyan) !important;
-  box-shadow: 0 0 15px rgba(0,245,255,0.25) !important;
+  border-color: var(--accent) !important;
 }}
 label {{ color: var(--text2) !important; }}
 
 /* ══════════ FILE UPLOADER ══════════ */
 [data-testid="stFileUploadDropzone"] {{
-  border: 2px dashed rgba(0,245,255,0.3) !important;
+  border: 2px dashed var(--border) !important;
   border-radius: 12px !important;
-  background: rgba(0,245,255,0.03) !important;
-  transition: all 0.3s !important;
+  background: var(--glass) !important;
+  transition: all 0.2s !important;
 }}
 [data-testid="stFileUploadDropzone"]:hover {{
-  border-color: var(--cyan) !important;
-  background: rgba(0,245,255,0.07) !important;
-  box-shadow: 0 0 20px rgba(0,245,255,0.15) !important;
+  border-color: var(--accent) !important;
 }}
 
 /* ══════════ EXPANDER ══════════ */
 [data-testid="stExpander"] {{
   border: 1px solid var(--border) !important;
   border-radius: 12px !important;
-  background: rgba(0,245,255,0.03) !important;
-  backdrop-filter: blur(10px) !important;
+  background: var(--glass) !important;
   transition: all 0.2s !important;
 }}
 [data-testid="stExpander"]:hover {{
-  border-color: rgba(0,245,255,0.3) !important;
-  box-shadow: 0 0 20px rgba(0,245,255,0.08) !important;
+  border-color: var(--accent) !important;
 }}
 [data-testid="stExpander"] summary {{
-  color: var(--cyan) !important;
+  color: var(--text1) !important;
   font-weight: 600 !important;
 }}
 
 /* ══════════ SECTION HEADER ══════════ */
 .section-header {{
-  font-family: 'Orbitron', sans-serif !important;
-  font-size: 0.58rem;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.7rem;
   font-weight: 700;
-  color: var(--cyan);
-  letter-spacing: 0.2em;
+  color: var(--text3);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   margin-bottom: 0.85rem;
   margin-top: 0.25rem;
   display: flex;
   align-items: center;
   gap: 10px;
-  text-shadow: 0 0 10px rgba(0,245,255,0.5);
 }}
 .section-header::before {{
   content: '';
   display: inline-block;
-  width: 20px; height: 1px;
-  background: linear-gradient(90deg, var(--cyan), var(--magenta));
-  box-shadow: 0 0 6px var(--cyan);
+  width: 16px; height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
 }}
 .section-header::after {{
   content: '';
   flex: 1; height: 1px;
-  background: linear-gradient(90deg, rgba(0,245,255,0.2), transparent);
+  background: var(--border);
 }}
 
 /* ══════════ PAGE HEADER WRAP ══════════ */
 .page-header-wrap {{
-  background: linear-gradient(135deg,
-    rgba(0,245,255,0.05), rgba(191,90,242,0.04));
+  background: var(--bg1);
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: 16px;
   padding: 1.75rem 2rem;
   margin-bottom: 2rem;
-  backdrop-filter: blur(20px);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 40px rgba(0,0,0,0.3),
-              inset 0 1px 0 rgba(0,245,255,0.12);
-}}
-.page-header-wrap::before {{
-  content: '';
-  position: absolute;
-  top: -50%; left: -50%;
-  width: 200%; height: 200%;
-  background: conic-gradient(
-    from 0deg at 50% 50%,
-    transparent 0deg,
-    rgba(0,245,255,0.03) 60deg,
-    transparent 120deg
-  );
-  animation: rotate-glow 10s linear infinite;
-  pointer-events: none;
-}}
-.page-header-wrap::after {{
-  content: 'NEURAL LINK ACTIVE';
-  position: absolute;
-  top: 12px; right: 18px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 0.5rem;
-  color: var(--green);
-  letter-spacing: 0.15em;
-  text-shadow: 0 0 8px rgba(0,255,157,0.6);
-  animation: blink 2s infinite;
-}}
-@keyframes rotate-glow {{
-  0%   {{ transform: rotate(0deg); }}
-  100% {{ transform: rotate(360deg); }}
-}}
-@keyframes blink {{
-  0%, 100% {{ opacity: 1; }}
-  50%  {{ opacity: 0.3; }}
+  border-left: 4px solid var(--accent);
 }}
 
 /* ══════════ SCROLLBAR ══════════ */
 ::-webkit-scrollbar {{ width: 5px; height: 5px; }}
-::-webkit-scrollbar-track {{ background: rgba(0,245,255,0.03); }}
+::-webkit-scrollbar-track {{ background: var(--bg2); }}
 ::-webkit-scrollbar-thumb {{
-  background: linear-gradient(var(--cyan), var(--magenta));
+  background: var(--border);
   border-radius: 3px;
 }}
 
@@ -580,282 +403,34 @@ label {{ color: var(--text2) !important; }}
 hr {{
   border: none !important;
   height: 1px !important;
-  background: linear-gradient(90deg,
-    transparent, var(--border), transparent) !important;
+  background: var(--border) !important;
   margin: 1.5rem 0 !important;
 }}
 
 /* ══════════ CAPTION ══════════ */
 .stCaption {{ color: var(--text3) !important; font-size: 0.72rem !important; }}
 
-/* ══════════ TILT CARD WRAPPER ══════════ */
-.tilt-card {{
-  transform-style: preserve-3d;
-  perspective: 1000px;
-  transition: transform 0.1s ease;
+/* ══════════ CARD STYLES ══════════ */
+.data-card {{
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  transition: border-color 0.2s;
+}}
+.data-card:hover {{ border-color: var(--accent); }}
+
+/* ══════════ PROGRESS BAR ══════════ */
+.prog-bar {{
+  background: var(--accent);
+  height: 4px;
+  border-radius: 999px;
 }}
 
-/* ══════════ SCAN LINE OVERLAY ══════════ */
-.scanlines {{
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0,245,255,0.015) 2px,
-    rgba(0,245,255,0.015) 4px
-  );
-  pointer-events: none;
-  border-radius: inherit;
-}}
-
-/* ══════════ STATUS BADGES GLITCH ══════════ */
-.badge-paid    {{ animation: glow-green 2s infinite alternate; }}
-.badge-partial {{ animation: glow-blue  2s infinite alternate; }}
-.badge-unpaid  {{ animation: glow-red   2s infinite alternate; }}
-@keyframes glow-green  {{ from {{ box-shadow: 0 0 6px #00ff9d; }} to {{ box-shadow: 0 0 16px #00ff9d, 0 0 30px rgba(0,255,157,0.3); }} }}
-@keyframes glow-blue   {{ from {{ box-shadow: 0 0 6px #00f5ff; }} to {{ box-shadow: 0 0 16px #00f5ff, 0 0 30px rgba(0,245,255,0.3); }} }}
-@keyframes glow-red    {{ from {{ box-shadow: 0 0 6px #ff2d55; }} to {{ box-shadow: 0 0 16px #ff2d55, 0 0 30px rgba(255,45,85,0.3); }} }}
-
-/* ══════════ NEON PROGRESS BAR ══════════ */
-@keyframes neon-flow {{
-  0%   {{ background-position: 0% 50%; }}
-  100% {{ background-position: 200% 50%; }}
-}}
-.neon-bar {{
-  background: linear-gradient(90deg,
-    #00f5ff, #00ff9d, #bf5af2, #00f5ff);
-  background-size: 200% 100%;
-  animation: neon-flow 2s linear infinite;
-  box-shadow: 0 0 10px currentColor;
-}}
-
-/* ══════════ FLOATING ANIMATION ══════════ */
-@keyframes float {{
-  0%, 100% {{ transform: translateY(0px); }}
-  50%       {{ transform: translateY(-6px); }}
-}}
+/* ══════════ STATUS BADGES ══════════ */
+.badge-paid    {{ border-color: rgba(5,150,105,0.5) !important; }}
+.badge-partial {{ border-color: rgba(14,165,233,0.5) !important; }}
+.badge-unpaid  {{ border-color: rgba(220,38,38,0.5) !important; }}
 </style>
-
-<!-- THREE.JS 3D HOLOGRAPHIC BACKGROUND - deferred for fast load -->
-<canvas id="holo-canvas"></canvas>
-<script>
-window.addEventListener('load', function() {{
-  var s = document.createElement('script');
-  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-  s.onload = initHoloBackground;
-  document.head.appendChild(s);
-}});
-
-function initHoloBackground() {{
-  const canvas = document.getElementById('holo-canvas');
-  if (!canvas) return;
-
-  const renderer = new THREE.WebGLRenderer({{ canvas, antialias: true, alpha: true }});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setClearColor(0x000000, 0);
-
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.z = 60;
-
-  // ── Particles ──
-  const PARTICLE_COUNT = 90;
-  const pGeo = new THREE.BufferGeometry();
-  const positions = new Float32Array(PARTICLE_COUNT * 3);
-  const colors    = new Float32Array(PARTICLE_COUNT * 3);
-  const sizes     = new Float32Array(PARTICLE_COUNT);
-  const speeds    = new Float32Array(PARTICLE_COUNT);
-
-  const neonColors = [
-    new THREE.Color(0x00f5ff),
-    new THREE.Color(0xff00ff),
-    new THREE.Color(0x00ff9d),
-    new THREE.Color(0xbf5af2),
-  ];
-
-  for (let i = 0; i < PARTICLE_COUNT; i++) {{
-    positions[i * 3]     = (Math.random() - 0.5) * 200;
-    positions[i * 3 + 1] = (Math.random() - 0.5) * 120;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
-    const c = neonColors[Math.floor(Math.random() * neonColors.length)];
-    colors[i * 3]     = c.r;
-    colors[i * 3 + 1] = c.g;
-    colors[i * 3 + 2] = c.b;
-    sizes[i]  = Math.random() * 2.5 + 0.5;
-    speeds[i] = Math.random() * 0.3 + 0.05;
-  }}
-
-  pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  pGeo.setAttribute('color',    new THREE.BufferAttribute(colors, 3));
-  pGeo.setAttribute('size',     new THREE.BufferAttribute(sizes, 1));
-
-  const pMat = new THREE.PointsMaterial({{
-    size: 0.8, vertexColors: true, transparent: true, opacity: 0.7,
-    sizeAttenuation: true, blending: THREE.AdditiveBlending, depthWrite: false
-  }});
-  const particles = new THREE.Points(pGeo, pMat);
-  scene.add(particles);
-
-  // ── Connection Lines ──
-  const lineMat = new THREE.LineBasicMaterial({{
-    color: 0x00f5ff, transparent: true, opacity: 0.08,
-    blending: THREE.AdditiveBlending, depthWrite: false
-  }});
-
-  const lines = [];
-  const CONNECTION_DIST = 30;
-
-  function rebuildLines() {{
-    lines.forEach(l => scene.remove(l));
-    lines.length = 0;
-    const pos = pGeo.attributes.position.array;
-    for (let i = 0; i < PARTICLE_COUNT; i++) {{
-      for (let j = i + 1; j < PARTICLE_COUNT; j++) {{
-        const dx = pos[i*3]   - pos[j*3];
-        const dy = pos[i*3+1] - pos[j*3+1];
-        const dz = pos[i*3+2] - pos[j*3+2];
-        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
-        if (dist < CONNECTION_DIST) {{
-          const geo = new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(pos[i*3], pos[i*3+1], pos[i*3+2]),
-            new THREE.Vector3(pos[j*3], pos[j*3+1], pos[j*3+2])
-          ]);
-          const alpha = (1 - dist / CONNECTION_DIST) * 0.12;
-          const m = lineMat.clone();
-          m.opacity = alpha;
-          const line = new THREE.Line(geo, m);
-          scene.add(line);
-          lines.push(line);
-        }}
-      }}
-    }}
-  }}
-
-  // ── Glowing orbs ──
-  const orbGeo = new THREE.SphereGeometry(0.4, 8, 8);
-  const orbs = [];
-  for (let i = 0; i < 12; i++) {{
-    const c = neonColors[i % neonColors.length];
-    const mat = new THREE.MeshBasicMaterial({{
-      color: c, transparent: true, opacity: 0.8,
-      blending: THREE.AdditiveBlending
-    }});
-    const orb = new THREE.Mesh(orbGeo, mat);
-    orb.position.set(
-      (Math.random() - 0.5) * 140,
-      (Math.random() - 0.5) * 80,
-      (Math.random() - 0.5) * 60
-    );
-    orb.userData = {{
-      vx: (Math.random() - 0.5) * 0.08,
-      vy: (Math.random() - 0.5) * 0.08,
-      vz: (Math.random() - 0.5) * 0.04,
-      phase: Math.random() * Math.PI * 2
-    }};
-    scene.add(orb);
-    orbs.push(orb);
-  }}
-
-  // ── Grid plane ──
-  const gridHelper = new THREE.GridHelper(200, 30, 0x00f5ff, 0x0a2a2a);
-  gridHelper.material.transparent = true;
-  gridHelper.material.opacity = 0.06;
-  gridHelper.position.y = -40;
-  scene.add(gridHelper);
-
-  let frame = 0;
-  let mouseX = 0, mouseY = 0;
-  document.addEventListener('mousemove', e => {{
-    mouseX = (e.clientX / window.innerWidth  - 0.5) * 2;
-    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
-  }});
-
-  function animate() {{
-    requestAnimationFrame(animate);
-    frame++;
-
-    const pos = pGeo.attributes.position.array;
-    for (let i = 0; i < PARTICLE_COUNT; i++) {{
-      pos[i * 3 + 1] += speeds[i] * 0.08;
-      if (pos[i * 3 + 1] > 60) pos[i * 3 + 1] = -60;
-    }}
-    pGeo.attributes.position.needsUpdate = true;
-
-    if (frame % 20 === 0) rebuildLines();
-
-    orbs.forEach((orb, i) => {{
-      orb.position.x += orb.userData.vx;
-      orb.position.y += orb.userData.vy;
-      orb.position.z += orb.userData.vz;
-      if (Math.abs(orb.position.x) > 80) orb.userData.vx *= -1;
-      if (Math.abs(orb.position.y) > 45) orb.userData.vy *= -1;
-      if (Math.abs(orb.position.z) > 35) orb.userData.vz *= -1;
-      const pulse = Math.sin(frame * 0.03 + orb.userData.phase);
-      orb.material.opacity = 0.4 + pulse * 0.35;
-      const s = 0.8 + pulse * 0.4;
-      orb.scale.set(s, s, s);
-    }});
-
-    gridHelper.rotation.y += 0.0005;
-
-    camera.position.x += (mouseX * 8 - camera.position.x) * 0.02;
-    camera.position.y += (-mouseY * 5 - camera.position.y) * 0.02;
-    camera.lookAt(scene.position);
-
-    particles.rotation.y += 0.0002;
-    particles.rotation.x += 0.0001;
-
-    renderer.render(scene, camera);
-  }}
-
-  window.addEventListener('resize', () => {{
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  }});
-
-  animate();
-}}
-</script>
-
-<!-- TILT + SHINE JS -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {{
-  function initTilt(el) {{
-    el.addEventListener('mousemove', function(e) {{
-      const rect = el.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width  - 0.5;
-      const y = (e.clientY - rect.top)  / rect.height - 0.5;
-      el.style.transform = `perspective(800px) rotateY(${{x * 14}}deg) rotateX(${{-y * 10}}deg) translateZ(8px)`;
-      const shine = el.querySelector('.holo-shine');
-      if (shine) {{
-        shine.style.background = `radial-gradient(circle at ${{(x+0.5)*100}}% ${{(y+0.5)*100}}%, rgba(0,245,255,0.18) 0%, rgba(255,0,255,0.08) 40%, transparent 70%)`;
-      }}
-    }});
-    el.addEventListener('mouseleave', function() {{
-      el.style.transform = 'perspective(800px) rotateY(0deg) rotateX(0deg) translateZ(0px)';
-      el.style.transition = 'transform 0.5s ease';
-      const shine = el.querySelector('.holo-shine');
-      if (shine) shine.style.background = 'transparent';
-    }});
-    el.addEventListener('mouseenter', function() {{
-      el.style.transition = 'transform 0.1s ease';
-    }});
-  }}
-
-  const observer = new MutationObserver(function() {{
-    document.querySelectorAll('.holo-tilt:not([data-tilt-init])').forEach(function(el) {{
-      el.setAttribute('data-tilt-init', '1');
-      initTilt(el);
-    }});
-  }});
-  observer.observe(document.body, {{ childList: true, subtree: true }});
-  document.querySelectorAll('.holo-tilt').forEach(initTilt);
-}});
-</script>
 """, unsafe_allow_html=True)
 
 
@@ -1004,7 +579,7 @@ def page_header(title, subtitle=""):
     st.markdown(f"""
 <div class="page-header-wrap">
   <h1 style="margin:0;padding:0;">{title}</h1>
-  {"" if not subtitle else f'<p style="color:var(--text2);margin:8px 0 0;font-size:0.82rem;font-family:Orbitron,sans-serif;letter-spacing:0.05em;">{subtitle}</p>'}
+  {"" if not subtitle else f'<p style="color:var(--text2);margin:8px 0 0;font-size:0.82rem;font-family:Inter,sans-serif;letter-spacing:0.02em;">{subtitle}</p>'}
 </div>
 """, unsafe_allow_html=True)
     _c1, _c2 = st.columns([8, 1])
@@ -1018,27 +593,27 @@ def section_label(text):
 
 def status_badge(label, cls):
     colors = {
-        "paid":    ("rgba(0,255,157,0.15)", "#00ff9d", "badge-paid"),
-        "partial": ("rgba(0,245,255,0.12)", "#00f5ff", "badge-partial"),
-        "unpaid":  ("rgba(255,45,85,0.15)", "#ff2d55", "badge-unpaid"),
+        "paid":    ("rgba(5,150,105,0.12)", "#059669", "badge-paid"),
+        "partial": ("rgba(14,165,233,0.12)", "#0ea5e9", "badge-partial"),
+        "unpaid":  ("rgba(220,38,38,0.12)", "#dc2626", "badge-unpaid"),
     }
-    bg, col, anim = colors.get(cls, ("rgba(255,255,255,0.1)", "#fff", ""))
-    return f'<span class="{anim}" style="background:{bg};color:{col};border:1px solid {col}40;padding:4px 12px;border-radius:999px;font-family:Orbitron,sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;">{label}</span>'
+    bg, col, anim = colors.get(cls, ("rgba(100,116,139,0.1)", "#64748b", ""))
+    return f'<span class="{anim}" style="background:{bg};color:{col};border:1px solid {col}50;padding:4px 12px;border-radius:999px;font-family:Inter,sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.06em;">{label}</span>'
 
 def student_card(room, name, food, service, prev, total, paid_amount):
     remaining = max(0.0, total - paid_amount)
     if paid_amount >= total:
-        accent, glow, badge_bg, badge_cls = "#00ff9d", "rgba(0,255,157,0.15)", "linear-gradient(135deg,#00ff9d,#00cc7a)", "paid"
-        badge_txt   = "✓ PAID IN FULL"
-        amount_html = f'<span style="color:#00ff9d;font-weight:800;font-size:0.95rem;font-variant-numeric:tabular-nums;text-shadow:0 0 10px rgba(0,255,157,0.5);">Rs&nbsp;{int(total):,} — CLEARED</span>'
+        accent, left_color, badge_cls = "#059669", "#059669", "paid"
+        badge_txt   = "✓ Paid in Full"
+        amount_html = f'<span style="color:#059669;font-weight:700;font-size:0.9rem;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(total):,} — Cleared</span>'
     elif paid_amount > 0:
-        accent, glow, badge_bg, badge_cls = "#00f5ff", "rgba(0,245,255,0.12)", "linear-gradient(135deg,#00f5ff,#0099bb)", "partial"
-        badge_txt   = "◑ PARTIAL"
-        amount_html = f'<span style="color:#00f5ff;font-weight:800;font-size:0.95rem;font-variant-numeric:tabular-nums;text-shadow:0 0 10px rgba(0,245,255,0.5);">Paid: Rs&nbsp;{int(paid_amount):,} · Due: Rs&nbsp;{int(remaining):,}</span>'
+        accent, left_color, badge_cls = "#0ea5e9", "#0ea5e9", "partial"
+        badge_txt   = "◑ Partial"
+        amount_html = f'<span style="color:#0ea5e9;font-weight:700;font-size:0.9rem;font-variant-numeric:tabular-nums;">Paid: Rs&nbsp;{int(paid_amount):,} · Due: Rs&nbsp;{int(remaining):,}</span>'
     else:
-        accent, glow, badge_bg, badge_cls = "#ff2d55", "rgba(255,45,85,0.12)", "linear-gradient(135deg,#ff2d55,#cc0033)", "unpaid"
-        badge_txt   = "✗ UNPAID"
-        amount_html = f'<span style="color:#ff2d55;font-weight:800;font-size:0.95rem;font-variant-numeric:tabular-nums;text-shadow:0 0 10px rgba(255,45,85,0.5);">Rs&nbsp;{int(total):,} — OUTSTANDING</span>'
+        accent, left_color, badge_cls = "#dc2626", "#dc2626", "unpaid"
+        badge_txt   = "✗ Unpaid"
+        amount_html = f'<span style="color:#dc2626;font-weight:700;font-size:0.9rem;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(total):,} — Outstanding</span>'
 
     initials = "".join([w[0].upper() for w in name.split()[:2]]) if name else "?"
     pct   = int(paid_amount / total * 100) if total else 0
@@ -1046,65 +621,50 @@ def student_card(room, name, food, service, prev, total, paid_amount):
     badge_html = status_badge(badge_txt, badge_cls)
 
     st.markdown(f"""
-<div class="holo-tilt" style="
-  background: linear-gradient(135deg, rgba(0,0,0,0.6), rgba(5,5,20,0.8));
-  border: 1px solid {accent}40;
-  border-radius: 16px;
-  padding: 18px 22px;
+<div style="
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-left: 4px solid {left_color};
+  border-radius: 12px;
+  padding: 16px 20px;
   margin-bottom: 10px;
-  backdrop-filter: blur(20px);
-  box-shadow: 0 4px 30px {glow}, inset 0 1px 0 rgba(255,255,255,0.05);
-  position: relative;
-  overflow: hidden;
-  transform-style: preserve-3d;
-  cursor: default;
+  transition: border-color 0.2s;
 ">
-  <div class="scanlines"></div>
-  <div class="holo-shine" style="position:absolute;inset:0;pointer-events:none;border-radius:16px;transition:background 0.15s;"></div>
-  <!-- Accent corner -->
-  <div style="position:absolute;top:0;right:0;width:60px;height:60px;
-    background:radial-gradient(circle at top right, {accent}20, transparent 70%);
-    pointer-events:none;"></div>
-
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;position:relative;z-index:1;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;">
     <div style="display:flex;align-items:center;gap:14px;">
-      <div style="width:48px;height:48px;border-radius:12px;
-        background:{badge_bg};
+      <div style="width:44px;height:44px;border-radius:10px;
+        background:{accent};opacity:0.9;
         display:flex;align-items:center;justify-content:center;
-        font-family:Orbitron,sans-serif;font-size:14px;font-weight:900;color:#fff;flex-shrink:0;
-        box-shadow:0 4px 16px {glow};
-        border:1px solid {accent}50;">{initials}</div>
+        font-family:Inter,sans-serif;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;">{initials}</div>
       <div>
-        <div style="font-size:1rem;font-weight:700;color:#e0f7ff;letter-spacing:0.01em;">{name}</div>
-        <div style="font-size:0.72rem;color:var(--text3);margin-top:2px;font-family:Orbitron,sans-serif;letter-spacing:0.06em;">
-          ROOM&nbsp;<strong style="color:{accent};text-shadow:0 0 8px {accent}80;">{room}</strong>
+        <div style="font-size:0.95rem;font-weight:700;color:var(--text1);">{name}</div>
+        <div style="font-size:0.72rem;color:var(--text3);margin-top:2px;">
+          Room <strong style="color:var(--text2);">{room}</strong>
         </div>
       </div>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
       {badge_html}
       {amount_html}
     </div>
   </div>
 
-  <!-- Progress bar -->
-  <div style="margin-top:14px;position:relative;z-index:1;">
-    <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
-      <span style="font-family:Orbitron,sans-serif;font-size:0.55rem;color:var(--text3);letter-spacing:0.1em;">PAYMENT PROGRESS</span>
-      <span style="font-family:Orbitron,sans-serif;font-size:0.55rem;color:{accent};text-shadow:0 0 6px {accent}80;">{pct}%</span>
+  <div style="margin-top:12px;">
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+      <span style="font-size:0.65rem;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;">Payment Progress</span>
+      <span style="font-size:0.65rem;color:{accent};font-weight:700;">{pct}%</span>
     </div>
-    <div style="background:rgba(255,255,255,0.05);border-radius:999px;height:4px;overflow:hidden;border:1px solid rgba(255,255,255,0.04);">
-      <div class="neon-bar" style="height:4px;width:{bar_w}%;border-radius:999px;transition:width 0.6s ease;"></div>
+    <div style="background:var(--border);border-radius:999px;height:4px;overflow:hidden;">
+      <div style="background:{accent};height:4px;width:{bar_w}%;border-radius:999px;transition:width 0.4s ease;"></div>
     </div>
   </div>
 
-  <!-- Breakdown -->
-  <div style="margin-top:12px;padding-top:12px;border-top:1px solid {accent}20;
-    display:flex;gap:20px;flex-wrap:wrap;position:relative;z-index:1;">
-    <span style="font-size:0.75rem;color:var(--text3);">Food&nbsp;<strong style="color:#e0f7ff;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(food):,}</strong></span>
-    <span style="font-size:0.75rem;color:var(--text3);">Service&nbsp;<strong style="color:#e0f7ff;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(service):,}</strong></span>
-    <span style="font-size:0.75rem;color:var(--text3);">Arrears&nbsp;<strong style="color:#e0f7ff;font-variant-numeric:tabular-nums;">Rs&nbsp;{int(prev):,}</strong></span>
-    <span style="font-size:0.75rem;color:var(--text3);">Total&nbsp;<strong style="color:{accent};font-size:0.88rem;font-variant-numeric:tabular-nums;text-shadow:0 0 8px {accent}60;">Rs&nbsp;{int(total):,}</strong></span>
+  <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);
+    display:flex;gap:18px;flex-wrap:wrap;">
+    <span style="font-size:0.74rem;color:var(--text3);">Food&nbsp;<strong style="color:var(--text1);font-variant-numeric:tabular-nums;">Rs&nbsp;{int(food):,}</strong></span>
+    <span style="font-size:0.74rem;color:var(--text3);">Service&nbsp;<strong style="color:var(--text1);font-variant-numeric:tabular-nums;">Rs&nbsp;{int(service):,}</strong></span>
+    <span style="font-size:0.74rem;color:var(--text3);">Arrears&nbsp;<strong style="color:var(--text1);font-variant-numeric:tabular-nums;">Rs&nbsp;{int(prev):,}</strong></span>
+    <span style="font-size:0.74rem;color:var(--text3);">Total&nbsp;<strong style="color:{accent};font-size:0.85rem;font-variant-numeric:tabular-nums;font-weight:700;">Rs&nbsp;{int(total):,}</strong></span>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -1113,82 +673,70 @@ def receipt_card(room, name, amount, date, idx):
     initials = "".join([w[0].upper() for w in name.split()[:2]]) if name else "?"
     amt_fmt  = f"Rs\u00a0{int(float(amount)):,}" if amount else "Rs\u00a00"
     st.markdown(f"""
-<div class="holo-tilt" style="
-  background:linear-gradient(135deg,rgba(0,0,0,0.5),rgba(0,20,15,0.7));
-  border:1px solid rgba(0,255,157,0.2);
-  border-radius:14px;padding:14px 18px;margin-bottom:8px;
+<div style="
+  background:var(--bg1);
+  border:1px solid var(--border);
+  border-left:4px solid #059669;
+  border-radius:12px;padding:14px 18px;margin-bottom:8px;
   display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
-  backdrop-filter:blur(15px);
-  box-shadow:0 2px 20px rgba(0,255,157,0.08);
-  position:relative;overflow:hidden;transform-style:preserve-3d;
 ">
-  <div class="holo-shine" style="position:absolute;inset:0;pointer-events:none;border-radius:14px;"></div>
-  <div class="scanlines"></div>
-  <div style="display:flex;align-items:center;gap:12px;position:relative;z-index:1;">
+  <div style="display:flex;align-items:center;gap:12px;">
     <div style="width:40px;height:40px;border-radius:10px;
-      background:linear-gradient(135deg,#00ff9d,#00cc7a);
+      background:#059669;
       display:flex;align-items:center;justify-content:center;
-      font-family:Orbitron,sans-serif;font-size:12px;font-weight:800;color:#000;
-      box-shadow:0 4px 12px rgba(0,255,157,0.4);">{initials}</div>
+      font-family:Inter,sans-serif;font-size:13px;font-weight:800;color:#fff;">{initials}</div>
     <div>
-      <div style="font-size:0.9rem;font-weight:700;color:#e0f7ff;">{name}</div>
-      <div style="font-size:0.7rem;color:var(--text3);margin-top:1px;font-family:Orbitron,sans-serif;letter-spacing:0.06em;">
-        RM&nbsp;<strong style="color:#00f5ff;">{room}</strong>
+      <div style="font-size:0.9rem;font-weight:700;color:var(--text1);">{name}</div>
+      <div style="font-size:0.7rem;color:var(--text3);margin-top:1px;">
+        Room <strong style="color:var(--text2);">{room}</strong>
         &nbsp;·&nbsp;<span>{date}</span>
       </div>
     </div>
   </div>
-  <div style="font-family:Orbitron,sans-serif;font-size:1.1rem;font-weight:900;
-    color:#00ff9d;text-shadow:0 0 12px rgba(0,255,157,0.6);
-    font-variant-numeric:tabular-nums;position:relative;z-index:1;">{amt_fmt}</div>
+  <div style="font-family:Inter,sans-serif;font-size:1.05rem;font-weight:800;
+    color:#059669;font-variant-numeric:tabular-nums;">{amt_fmt}</div>
 </div>
 """, unsafe_allow_html=True)
 
 def hall_summary_card(hall_name, total, collected, remaining, pct_int):
     if total == 0:
-        accent, glow, badge_bg = "#475569", "rgba(71,85,105,0.1)", "linear-gradient(135deg,#475569,#334155)"
+        accent, left_color = "#64748b", "#64748b"
     elif remaining == 0:
-        accent, glow, badge_bg = "#00ff9d", "rgba(0,255,157,0.12)", "linear-gradient(135deg,#00ff9d,#00cc7a)"
+        accent, left_color = "#059669", "#059669"
     elif collected > 0:
-        accent, glow, badge_bg = "#00f5ff", "rgba(0,245,255,0.12)", "linear-gradient(135deg,#00f5ff,#0099bb)"
+        accent, left_color = "#0ea5e9", "#0ea5e9"
     else:
-        accent, glow, badge_bg = "#ff2d55", "rgba(255,45,85,0.12)", "linear-gradient(135deg,#ff2d55,#cc0033)"
+        accent, left_color = "#dc2626", "#dc2626"
 
     bar_width = min(100, pct_int)
     st.markdown(f"""
-<div class="holo-tilt" style="
-  background:linear-gradient(135deg,rgba(0,0,0,0.55),rgba(5,5,20,0.75));
-  border:1px solid {accent}35;
-  border-left:3px solid {accent};
-  border-radius:16px;padding:18px 22px;margin-bottom:10px;
-  backdrop-filter:blur(20px);
-  box-shadow:0 4px 30px {glow}, inset 0 1px 0 rgba(255,255,255,0.04);
-  position:relative;overflow:hidden;transform-style:preserve-3d;
+<div style="
+  background:var(--bg1);
+  border:1px solid var(--border);
+  border-left:4px solid {left_color};
+  border-radius:12px;padding:16px 20px;margin-bottom:10px;
+  transition: border-color 0.2s;
 ">
-  <div class="scanlines"></div>
-  <div class="holo-shine" style="position:absolute;inset:0;pointer-events:none;border-radius:16px;"></div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;position:relative;z-index:1;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
     <div>
-      <div style="font-family:Orbitron,sans-serif;font-size:0.88rem;font-weight:700;
-        color:#e0f7ff;text-shadow:0 0 10px {accent}60;">{hall_name}</div>
-      <div style="font-size:0.72rem;color:var(--text3);margin-top:3px;letter-spacing:0.03em;">
-        Outstanding:&nbsp;<strong style="color:#e0f7ff;font-variant-numeric:tabular-nums;">Rs&nbsp;{total:,}</strong>
+      <div style="font-family:Inter,sans-serif;font-size:0.9rem;font-weight:700;color:var(--text1);">{hall_name}</div>
+      <div style="font-size:0.72rem;color:var(--text3);margin-top:2px;">
+        Total Dues: <strong style="color:var(--text2);font-variant-numeric:tabular-nums;">Rs&nbsp;{total:,}</strong>
       </div>
     </div>
     <div style="text-align:right;">
-      <div style="font-family:Orbitron,sans-serif;font-size:1.7rem;font-weight:900;
-        color:{accent};text-shadow:0 0 16px {accent}80;font-variant-numeric:tabular-nums;">{pct_int}%</div>
-      <div style="font-family:Orbitron,sans-serif;font-size:0.5rem;color:var(--text3);font-weight:700;letter-spacing:0.14em;">COLLECTED</div>
+      <div style="font-size:1.6rem;font-weight:800;color:{accent};font-variant-numeric:tabular-nums;">{pct_int}%</div>
+      <div style="font-size:0.6rem;color:var(--text3);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">Collected</div>
     </div>
   </div>
-  <div style="background:rgba(255,255,255,0.05);border-radius:999px;height:5px;overflow:hidden;margin-bottom:14px;position:relative;z-index:1;">
-    <div class="neon-bar" style="height:5px;width:{bar_width}%;border-radius:999px;transition:width 0.6s ease;"></div>
+  <div style="background:var(--border);border-radius:999px;height:4px;overflow:hidden;margin-bottom:12px;">
+    <div style="background:{accent};height:4px;width:{bar_width}%;border-radius:999px;transition:width 0.4s ease;"></div>
   </div>
-  <div style="display:flex;gap:24px;flex-wrap:wrap;position:relative;z-index:1;">
+  <div style="display:flex;gap:20px;flex-wrap:wrap;">
     <span style="font-size:0.76rem;color:var(--text3);">Collected&nbsp;
-      <strong style="color:#00ff9d;font-variant-numeric:tabular-nums;text-shadow:0 0 8px rgba(0,255,157,0.4);">Rs&nbsp;{collected:,}</strong></span>
+      <strong style="color:#059669;font-variant-numeric:tabular-nums;">Rs&nbsp;{collected:,}</strong></span>
     <span style="font-size:0.76rem;color:var(--text3);">Remaining&nbsp;
-      <strong style="color:#ff2d55;font-variant-numeric:tabular-nums;text-shadow:0 0 8px rgba(255,45,85,0.4);">Rs&nbsp;{remaining:,}</strong></span>
+      <strong style="color:#dc2626;font-variant-numeric:tabular-nums;">Rs&nbsp;{remaining:,}</strong></span>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -1206,22 +754,17 @@ st.sidebar.markdown("""
 
 role = st.sidebar.selectbox("Access Level", ["Student", "Hall Admin", "Senior Warden"])
 
-if AUTO_REFRESH:
-    refresh_rate = st.sidebar.selectbox("Sync Interval", ["Off", "30 sec", "60 sec", "2 min"], index=2)
-    rate_map = {"Off": 0, "30 sec": 30000, "60 sec": 60000, "2 min": 120000}
-    if rate_map[refresh_rate] > 0:
-        st_autorefresh(interval=rate_map[refresh_rate], key="autorefresh")
+
 
 st.sidebar.markdown("""
 <div style="padding:14px 12px;margin-top:10px;
-  border-top:1px solid rgba(0,245,255,0.1);text-align:center;
-  background:linear-gradient(135deg,rgba(0,245,255,0.04),rgba(255,0,255,0.02));
-  border-radius:0 0 8px 8px;position:relative;overflow:hidden;">
-  <div style="font-family:Orbitron,sans-serif;font-size:0.75rem;font-weight:800;
-    color:#00f5ff;letter-spacing:0.04em;text-shadow:0 0 10px rgba(0,245,255,0.5);">Abdul Hadi</div>
-  <div style="font-family:Orbitron,sans-serif;font-size:0.58rem;color:#bf5af2;
-    margin-top:3px;font-weight:600;letter-spacing:0.08em;">2025 (S) · CYS 90</div>
-  <div style="font-size:0.58rem;color:#3d7a8a;margin-top:4px;font-style:italic;">
+  border-top:1px solid var(--border);text-align:center;">
+  <div style="font-family:Orbitron,sans-serif;font-size:0.78rem;font-weight:800;
+    color:#60a5fa;letter-spacing:0.04em;
+    text-shadow:0 0 14px rgba(96,165,250,0.7), 0 0 28px rgba(96,165,250,0.35);">Abdul Hadi</div>
+  <div style="font-family:Inter,sans-serif;font-size:0.58rem;color:#64748b;
+    margin-top:3px;font-weight:500;letter-spacing:0.06em;">2025 (S) · CYS 90</div>
+  <div style="font-size:0.58rem;color:#64748b;margin-top:3px;">
     Designed &amp; Developed</div>
 </div>
 """, unsafe_allow_html=True)
@@ -1379,18 +922,18 @@ if role == "Student":
                 extracted_amount = st.session_state.get(ai_extract_key, int(total))
 
                 st.markdown(f"""
-<div style="background:rgba(0,255,157,0.06);border:1px solid rgba(0,255,157,0.3);
+<div style="background:rgba(5,150,105,0.08);border:1px solid rgba(5,150,105,0.3);
   border-radius:10px;padding:12px 16px;margin:8px 0;display:flex;
   justify-content:space-between;align-items:center;">
   <div>
-    <div style="font-family:Orbitron,sans-serif;font-size:0.6rem;color:#3d7a8a;
-      letter-spacing:0.12em;margin-bottom:4px;">AI DETECTED AMOUNT</div>
-    <div style="font-family:Orbitron,sans-serif;font-size:1.3rem;font-weight:900;
-      color:#00ff9d;text-shadow:0 0 12px rgba(0,255,157,0.5);">
+    <div style="font-family:Inter,sans-serif;font-size:0.65rem;color:#64748b;
+      letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">AI Detected Amount</div>
+    <div style="font-family:Inter,sans-serif;font-size:1.25rem;font-weight:800;
+      color:#059669;font-variant-numeric:tabular-nums;">
       Rs&nbsp;{extracted_amount:,}
     </div>
   </div>
-  <div style="font-size:1.5rem;">🤖</div>
+  <div style="font-size:1.4rem;">🤖</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1634,11 +1177,11 @@ elif role == "Hall Admin":
                         values=[paid_cnt, partial_cnt, unpaid_cnt],
                         hole=0.6,
                         marker=dict(
-                            colors=["#00ff9d","#00f5ff","#ff2d55"],
+                            colors=["#10b981","#3b82f6","#ef4444"],
                             line=dict(color="rgba(0,0,0,0)", width=0)
                         ),
                         textinfo="percent",
-                        textfont=dict(size=11, family="Orbitron", color="#fff"),
+                        textfont=dict(size=11, family="Inter", color="#fff"),
                         hovertemplate="<b>%{label}</b><br>%{value} students<extra></extra>"
                     )])
                     fig_s.update_layout(
@@ -1647,8 +1190,8 @@ elif role == "Hall Admin":
                         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                         annotations=[dict(
                             text=f"<b>{len(df_d)}</b>",
-                            x=0.5, y=0.5, font_size=18, font_color="#00f5ff",
-                            font_family="Orbitron", showarrow=False
+                            x=0.5, y=0.5, font_size=18, font_color="#3b82f6",
+                            font_family="Inter", showarrow=False
                         )]
                     )
                     st.plotly_chart(fig_s, use_container_width=True, config={"displayModeBar": False})
@@ -1665,7 +1208,7 @@ elif role == "Hall Admin":
                     ))
                     fig_cv.add_trace(go.Bar(
                         name="Collected", x=["Dues"],
-                        y=[int(collected)], marker_color="#00ff9d",
+                        y=[int(collected)], marker_color="#10b981",
                         marker_line_width=0,
                         hovertemplate="Collected: Rs %{y:,.0f}<extra></extra>"
                     ))
@@ -1674,9 +1217,9 @@ elif role == "Hall Admin":
                         margin=dict(t=5,b=5,l=5,r=5),
                         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                         showlegend=False,
-                        xaxis=dict(showgrid=False, tickfont=dict(color="#3d7a8a", size=9)),
+                        xaxis=dict(showgrid=False, tickfont=dict(color="#64748b", size=9)),
                         yaxis=dict(showgrid=True, gridcolor="rgba(0,245,255,0.05)",
-                                   tickfont=dict(color="#3d7a8a", size=8), tickformat=",")
+                                   tickfont=dict(color="#64748b", size=8), tickformat=",")
                     )
                     st.plotly_chart(fig_cv, use_container_width=True, config={"displayModeBar": False})
 
@@ -1691,19 +1234,19 @@ elif role == "Hall Admin":
                             orientation="h",
                             marker=dict(
                                 color=top_unpaid["Remaining (Rs)"].tolist(),
-                                colorscale=[[0,"#ff6b35"],[1,"#ff2d55"]],
+                                colorscale=[[0,"#f59e0b"],[1,"#ef4444"]],
                                 showscale=False, line=dict(width=0)
                             ),
                             text=[f"Rs {v:,}" for v in top_unpaid["Remaining (Rs)"].tolist()],
                             textposition="outside",
-                            textfont=dict(size=9, color="#7ecfde"),
+                            textfont=dict(size=9, color="#94a3b8"),
                             hovertemplate="<b>%{y}</b><br>Rs %{x:,.0f}<extra></extra>"
                         ))
                         fig_u.update_layout(
                             height=200, margin=dict(t=5,b=5,l=5,r=60),
                             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                             xaxis=dict(showgrid=False, visible=False),
-                            yaxis=dict(showgrid=False, tickfont=dict(color="#7ecfde", size=9))
+                            yaxis=dict(showgrid=False, tickfont=dict(color="#94a3b8", size=9))
                         )
                         st.plotly_chart(fig_u, use_container_width=True, config={"displayModeBar": False})
                     else:
@@ -1720,11 +1263,11 @@ elif role == "Hall Admin":
                         values=[fd_tot, sv_tot, pr_tot],
                         hole=0.55,
                         marker=dict(
-                            colors=["#bf5af2","#00f5ff","#ff6b35"],
+                            colors=["#8b5cf6","#3b82f6","#f59e0b"],
                             line=dict(color="rgba(0,0,0,0)", width=0)
                         ),
                         textinfo="percent",
-                        textfont=dict(size=10, family="Orbitron", color="#fff"),
+                        textfont=dict(size=10, family="Inter", color="#fff"),
                         hovertemplate="<b>%{label}</b><br>Rs %{value:,.0f}<extra></extra>"
                     )])
                     fig_br.update_layout(
@@ -1743,9 +1286,9 @@ elif role == "Hall Admin":
             def row_color(row):
                 s = row.get("Status","")
                 if s == "Paid":
-                    return ["background-color:rgba(0,255,157,0.08);color:#00ff9d;font-weight:700"] * len(row)
+                    return ["background-color:rgba(16,185,129,0.08);color:#10b981;font-weight:700"] * len(row)
                 elif s == "Partial":
-                    return ["background-color:rgba(0,245,255,0.08);color:#00f5ff;font-weight:600"] * len(row)
+                    return ["background-color:rgba(59,130,246,0.08);color:#3b82f6;font-weight:600"] * len(row)
                 return ["background-color:rgba(255,45,85,0.07);color:#ff6b6b;font-weight:500"] * len(row)
 
             display_cols = ["RoomNo","Name","Food_Dues","Service_Charges","Previous","Total","Paid (Rs)","Remaining (Rs)","Status"]
@@ -2000,21 +1543,21 @@ elif role == "Senior Warden":
                 labels=["Collected", "Remaining"],
                 values=[collected_all, remaining_all],
                 hole=0.58,
-                marker=dict(colors=["#00ff9d","#ff2d55"], line=dict(color="rgba(0,0,0,0)", width=0)),
+                marker=dict(colors=["#10b981","#ef4444"], line=dict(color="rgba(0,0,0,0)", width=0)),
                 textinfo="percent",
-                textfont=dict(size=12, family="Orbitron", color="#fff"),
+                textfont=dict(size=12, family="Inter", color="#fff"),
                 hovertemplate="<b>%{label}</b><br>Rs %{value:,.0f}<extra></extra>"
             )])
             fig_pie.update_layout(
                 showlegend=True,
                 legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5,
-                            font=dict(size=10, family="Orbitron", color="#7ecfde")),
+                            font=dict(size=10, family="Inter", color="#94a3b8")),
                 margin=dict(t=10, b=10, l=10, r=10), height=260,
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                 annotations=[dict(
                     text=f"<b>{overall_pct}%</b>",
-                    x=0.5, y=0.5, font_size=20, font_family="Orbitron",
-                    font_color="#00f5ff", showarrow=False
+                    x=0.5, y=0.5, font_size=20, font_family="Inter",
+                    font_color="#3b82f6", showarrow=False
                 )]
             )
             st.plotly_chart(fig_pie, use_container_width=True, config={"displayModeBar": False})
@@ -2032,23 +1575,23 @@ elif role == "Senior Warden":
             fig_bar = go.Figure()
             fig_bar.add_trace(go.Bar(
                 name="Collected", x=hall_names, y=collected_vals,
-                marker_color="#00ff9d", marker_line_width=0,
+                marker_color="#10b981", marker_line_width=0,
                 hovertemplate="<b>%{x}</b><br>Collected: Rs %{y:,.0f}<extra></extra>"
             ))
             fig_bar.add_trace(go.Bar(
                 name="Remaining", x=hall_names, y=remaining_vals,
-                marker_color="#ff2d55", marker_line_width=0,
+                marker_color="#ef4444", marker_line_width=0,
                 hovertemplate="<b>%{x}</b><br>Remaining: Rs %{y:,.0f}<extra></extra>"
             ))
             fig_bar.update_layout(
                 barmode="stack", showlegend=True,
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1,
-                            font=dict(size=9, family="Orbitron", color="#7ecfde")),
+                            font=dict(size=9, family="Inter", color="#94a3b8")),
                 margin=dict(t=30, b=10, l=10, r=10), height=260,
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                xaxis=dict(showgrid=False, tickfont=dict(size=9, family="Orbitron", color="#3d7a8a")),
+                xaxis=dict(showgrid=False, tickfont=dict(size=9, family="Inter", color="#64748b")),
                 yaxis=dict(showgrid=True, gridcolor="rgba(0,245,255,0.04)",
-                           tickformat=",", tickfont=dict(size=8, family="Orbitron", color="#3d7a8a")),
+                           tickformat=",", tickfont=dict(size=8, family="Inter", color="#64748b")),
             )
             st.plotly_chart(fig_bar, use_container_width=True, config={"displayModeBar": False})
         except ImportError:
@@ -2065,21 +1608,21 @@ elif role == "Senior Warden":
                 labels=["Paid", "Pending"],
                 values=[paid_students_all, unpaid_students_all],
                 hole=0.62,
-                marker=dict(colors=["#00f5ff","#ff6b35"], line=dict(color="rgba(0,0,0,0)", width=0)),
+                marker=dict(colors=["#3b82f6","#f59e0b"], line=dict(color="rgba(0,0,0,0)", width=0)),
                 textinfo="percent+value",
-                textfont=dict(size=11, family="Orbitron", color="#fff"),
+                textfont=dict(size=11, family="Inter", color="#fff"),
                 hovertemplate="<b>%{label}</b><br>%{value} students<extra></extra>"
             )])
             fig_d.update_layout(
                 showlegend=True,
                 legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5,
-                            font=dict(size=10, family="Orbitron", color="#7ecfde")),
+                            font=dict(size=10, family="Inter", color="#94a3b8")),
                 margin=dict(t=10, b=10, l=10, r=10), height=240,
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                 annotations=[dict(
                     text=f"<b>{total_students_all}</b>",
-                    x=0.5, y=0.5, font_size=16, font_family="Orbitron",
-                    font_color="#00f5ff", showarrow=False
+                    x=0.5, y=0.5, font_size=16, font_family="Inter",
+                    font_color="#3b82f6", showarrow=False
                 )]
             )
             st.plotly_chart(fig_d, use_container_width=True, config={"displayModeBar": False})
@@ -2092,19 +1635,19 @@ elif role == "Senior Warden":
                 x=hall_pcts, y=hall_labels, orientation="h",
                 marker=dict(
                     color=hall_pcts,
-                    colorscale=[[0,"#ff2d55"],[0.5,"#ff6b35"],[1,"#00ff9d"]],
+                    colorscale=[[0,"#ef4444"],[0.5,"#f59e0b"],[1,"#10b981"]],
                     showscale=False, line=dict(width=0),
                 ),
                 text=[f"{p}%" for p in hall_pcts],
                 textposition="outside",
-                textfont=dict(size=10, family="Orbitron", color="#7ecfde"),
+                textfont=dict(size=10, family="Inter", color="#94a3b8"),
                 hovertemplate="<b>%{y}</b><br>Recovery: %{x}%<extra></extra>"
             ))
             fig_h.update_layout(
                 margin=dict(t=10, b=10, l=10, r=50), height=240,
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                 xaxis=dict(range=[0,120], showgrid=False, visible=False),
-                yaxis=dict(showgrid=False, tickfont=dict(size=9, family="Orbitron", color="#7ecfde")),
+                yaxis=dict(showgrid=False, tickfont=dict(size=9, family="Inter", color="#94a3b8")),
             )
             st.plotly_chart(fig_h, use_container_width=True, config={"displayModeBar": False})
     except ImportError:
@@ -2164,28 +1707,25 @@ elif role == "Senior Warden":
 # FOOTER
 # ══════════════════════════════════════════════════════════════════
 st.markdown("""
-<div style="margin-top:3rem;padding:1.5rem 2rem;
-  background:linear-gradient(135deg,rgba(0,245,255,0.04),rgba(191,90,242,0.03));
-  border:1px solid rgba(0,245,255,0.1);
-  border-radius:16px;
-  backdrop-filter:blur(20px);
-  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
-  box-shadow:0 4px 30px rgba(0,0,0,0.2);
-  position:relative;overflow:hidden;">
-  <div style="position:absolute;top:0;left:0;right:0;height:1px;
-    background:linear-gradient(90deg,transparent,rgba(0,245,255,0.3),transparent);"></div>
+<div style="margin-top:3rem;padding:1.25rem 2rem;
+  background:var(--bg1);
+  border:1px solid var(--border);
+  border-radius:12px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
   <div>
-    <span style="font-family:Orbitron,sans-serif;font-size:0.82rem;font-weight:800;
-      color:#00f5ff;text-shadow:0 0 10px rgba(0,245,255,0.4);">UNIVERSITY MESS DUES SYSTEM</span>
-    <span style="color:rgba(0,245,255,0.15);margin:0 8px;">|</span>
-    <span style="font-size:0.74rem;color:#3d7a8a;">Powered by Streamlit &amp; Google Sheets</span>
+    <span style="font-family:Orbitron,sans-serif;font-size:0.8rem;font-weight:800;
+      color:#60a5fa;
+      text-shadow:0 0 16px rgba(96,165,250,0.7), 0 0 32px rgba(96,165,250,0.3);">HOLO-MESS v2.1</span>
+    <span style="color:var(--border);margin:0 8px;">|</span>
+    <span style="font-size:0.74rem;color:var(--text3);">University Mess Dues System · Powered by Streamlit &amp; Google Sheets</span>
   </div>
   <div style="text-align:right;">
-    <span style="font-family:Orbitron,sans-serif;font-size:0.78rem;font-weight:800;
-      color:#bf5af2;text-shadow:0 0 10px rgba(191,90,242,0.4);">Designed &amp; Developed by Abdul Hadi</span>
+    <span style="font-family:Orbitron,sans-serif;font-size:0.76rem;font-weight:800;
+      color:#60a5fa;
+      text-shadow:0 0 14px rgba(96,165,250,0.7), 0 0 28px rgba(96,165,250,0.3);">Designed &amp; Developed by Abdul Hadi</span>
     <br>
-    <span style="font-family:Orbitron,sans-serif;font-size:0.6rem;color:#3d7a8a;letter-spacing:0.08em;">
-      2025 (S) &nbsp;·&nbsp; CYS 90 &nbsp;·&nbsp; UET &nbsp;·&nbsp; HOLO-MESS v2.1
+    <span style="font-family:Inter,sans-serif;font-size:0.6rem;color:var(--text3);letter-spacing:0.06em;">
+      2025 (S) &nbsp;·&nbsp; CYS 90 &nbsp;·&nbsp; UET
     </span>
   </div>
 </div>
