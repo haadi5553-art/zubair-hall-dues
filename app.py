@@ -638,11 +638,17 @@ hr {{
 }}
 </style>
 
-<!-- THREE.JS 3D HOLOGRAPHIC BACKGROUND -->
+<!-- THREE.JS 3D HOLOGRAPHIC BACKGROUND - deferred for fast load -->
 <canvas id="holo-canvas"></canvas>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-(function() {{
+window.addEventListener('load', function() {{
+  var s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  s.onload = initHoloBackground;
+  document.head.appendChild(s);
+}});
+
+function initHoloBackground() {{
   const canvas = document.getElementById('holo-canvas');
   if (!canvas) return;
 
@@ -656,7 +662,7 @@ hr {{
   camera.position.z = 60;
 
   // ── Particles ──
-  const PARTICLE_COUNT = 180;
+  const PARTICLE_COUNT = 90;
   const pGeo = new THREE.BufferGeometry();
   const positions = new Float32Array(PARTICLE_COUNT * 3);
   const colors    = new Float32Array(PARTICLE_COUNT * 3);
@@ -778,7 +784,7 @@ hr {{
     }}
     pGeo.attributes.position.needsUpdate = true;
 
-    if (frame % 8 === 0) rebuildLines();
+    if (frame % 20 === 0) rebuildLines();
 
     orbs.forEach((orb, i) => {{
       orb.position.x += orb.userData.vx;
@@ -812,7 +818,7 @@ hr {{
   }});
 
   animate();
-}})();
+}}
 </script>
 
 <!-- TILT + SHINE JS -->
@@ -1282,17 +1288,118 @@ if role == "Student":
 
         with st.expander(f"⬡ Submit Receipt — Room {room} · {name}"):
             uploaded_files = st.file_uploader(
-                "Upload receipt image(s)",
+                "Upload receipt image(s) — Amount will be auto-detected",
                 accept_multiple_files=True,
+                type=["png","jpg","jpeg","webp"],
                 key=f"files_{room}_{idx}"
             )
-            amount_paid_input = st.number_input(
-                "Amount Submitted (Rs)",
-                min_value=1, max_value=int(total), value=int(total), step=1,
-                key=f"amt_{room}_{idx}"
-            )
+
+            # ── AI Amount Extraction ─────────────────────────────
+            ai_extract_key = f"ai_amt_{room}_{idx}"
+            ai_done_key    = f"ai_done_{room}_{idx}"
 
             if uploaded_files:
+                # Auto-extract on first upload (only once per file set)
+                file_hashes_now = [hashlib.md5(f.getvalue()).hexdigest() for f in uploaded_files]
+                prev_hashes_key = f"prev_hashes_{room}_{idx}"
+
+                if st.session_state.get(prev_hashes_key) != file_hashes_now:
+                    st.session_state[prev_hashes_key] = file_hashes_now
+                    st.session_state[ai_done_key] = False
+
+                if not st.session_state.get(ai_done_key, False):
+                    with st.spinner("🔍 Scanning receipt for amount..."):
+                        try:
+                            import base64, json, requests as _req
+
+                            total_extracted = 0
+                            for f in uploaded_files:
+                                img_bytes  = f.getvalue()
+                                b64_img    = base64.b64encode(img_bytes).decode("utf-8")
+                                ext        = f.name.lower().split(".")[-1]
+                                media_type = "image/jpeg" if ext in ["jpg","jpeg"] else f"image/{ext}"
+
+                                payload = {
+                                    "model": "claude-opus-4-6",
+                                    "max_tokens": 200,
+                                    "messages": [{
+                                        "role": "user",
+                                        "content": [
+                                            {
+                                                "type": "image",
+                                                "source": {
+                                                    "type": "base64",
+                                                    "media_type": media_type,
+                                                    "data": b64_img
+                                                }
+                                            },
+                                            {
+                                                "type": "text",
+                                                "text": (
+                                                    "This is a payment receipt image. "
+                                                    "Extract ONLY the total paid amount as a plain integer number (no Rs, no commas, no text). "
+                                                    "If multiple amounts exist, return the TOTAL/GRAND TOTAL. "
+                                                    "Reply with ONLY the number, nothing else. Example: 4500"
+                                                )
+                                            }
+                                        ]
+                                    }]
+                                }
+
+                                resp = _req.post(
+                                    "https://api.anthropic.com/v1/messages",
+                                    headers={"Content-Type": "application/json"},
+                                    json=payload,
+                                    timeout=30
+                                )
+                                if resp.status_code == 200:
+                                    raw = resp.json()["content"][0]["text"].strip()
+                                    # Clean: extract first number found
+                                    import re as _re
+                                    nums = _re.findall(r'\d[\d,]*', raw)
+                                    if nums:
+                                        val = int(nums[0].replace(",",""))
+                                        total_extracted += val
+
+                            if total_extracted > 0:
+                                # Cap at total due
+                                final_amt = min(total_extracted, int(total))
+                                st.session_state[ai_extract_key] = final_amt
+                                st.session_state[ai_done_key] = True
+                            else:
+                                st.session_state[ai_extract_key] = int(total)
+                                st.session_state[ai_done_key] = True
+
+                        except Exception as _e:
+                            # Fallback: use full total
+                            st.session_state[ai_extract_key] = int(total)
+                            st.session_state[ai_done_key] = True
+
+                # Show extracted amount (read-only display)
+                extracted_amount = st.session_state.get(ai_extract_key, int(total))
+
+                st.markdown(f"""
+<div style="background:rgba(0,255,157,0.06);border:1px solid rgba(0,255,157,0.3);
+  border-radius:10px;padding:12px 16px;margin:8px 0;display:flex;
+  justify-content:space-between;align-items:center;">
+  <div>
+    <div style="font-family:Orbitron,sans-serif;font-size:0.6rem;color:#3d7a8a;
+      letter-spacing:0.12em;margin-bottom:4px;">AI DETECTED AMOUNT</div>
+    <div style="font-family:Orbitron,sans-serif;font-size:1.3rem;font-weight:900;
+      color:#00ff9d;text-shadow:0 0 12px rgba(0,255,157,0.5);">
+      Rs&nbsp;{extracted_amount:,}
+    </div>
+  </div>
+  <div style="font-size:1.5rem;">🤖</div>
+</div>
+""", unsafe_allow_html=True)
+
+                if extracted_amount < int(total):
+                    rem_after = int(total) - extracted_amount
+                    st.info(f"⚠ Partial payment detected. Remaining after this: Rs {rem_after:,}")
+
+                amount_paid_input = extracted_amount
+
                 if st.button(f"⬆ Transmit Receipt — Room {room}", key=f"submit_{room}_{idx}"):
                     invalidate_cache()
                     fresh_all        = load_all_sheets_data()
@@ -1331,9 +1438,13 @@ if role == "Student":
                         save_payments(current_payments, hall)
                         rem = int(total) - amount_paid_input
                         if rem > 0:
-                            st.success(f"Receipt transmitted. Paid: Rs {amount_paid_input:,} · Remaining: Rs {rem:,}")
+                            st.success(f"✓ Receipt transmitted. Paid: Rs {amount_paid_input:,} · Remaining: Rs {rem:,}")
                         else:
-                            st.success(f"Full payment transmitted. Amount: Rs {amount_paid_input:,}")
+                            st.success(f"✓ Full payment transmitted. Amount: Rs {amount_paid_input:,}")
+                        # Reset AI state for this card
+                        st.session_state.pop(ai_extract_key, None)
+                        st.session_state.pop(ai_done_key, None)
+                        st.session_state.pop(prev_hashes_key, None)
                         st.rerun()
                     for e in errors:
                         st.error(e)
