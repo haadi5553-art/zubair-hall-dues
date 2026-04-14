@@ -15,14 +15,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ── Theme toggle ───────────────────────────────────────────────────
 if "theme" not in st.session_state:
     st.session_state["theme"] = "dark"
 _t = st.session_state["theme"]
 
-# ══════════════════════════════════════════════════════════════════
-# MASTER CSS + THREE.JS + TILT JS
-# ══════════════════════════════════════════════════════════════════
 st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
@@ -64,36 +60,24 @@ st.markdown(f"""
 }}
 
 *, *::before, *::after {{ box-sizing: border-box; }}
-
 html, body, [class*="css"] {{
   font-family: 'Inter', sans-serif !important;
   -webkit-font-smoothing: antialiased;
 }}
 
-*, *::before, *::after {{ box-sizing: border-box; }}
-
-html, body, [class*="css"] {{
-  font-family: 'Inter', sans-serif !important;
-  -webkit-font-smoothing: antialiased;
-}}
-
-/* ── Hide Streamlit chrome ── */
 #MainMenu, footer, header {{ visibility: hidden; }}
 .stDeployButton {{ display: none; }}
 
-/* ── App base ── */
 .stApp {{
   background: var(--bg0) !important;
   min-height: 100vh;
 }}
 
-/* ── Content ── */
 .block-container {{
   padding: 1.5rem 2rem 3rem !important;
   max-width: 1500px !important;
 }}
 
-/* ══════════ SIDEBAR ══════════ */
 [data-testid="stSidebar"] {{
   background: var(--bg1) !important;
   border-right: 1px solid var(--border) !important;
@@ -115,9 +99,6 @@ html, body, [class*="css"] {{
   color: var(--text1) !important;
   transition: all 0.2s;
 }}
-[data-testid="stSidebar"] .stSelectbox > div > div:focus-within {{
-  border-color: var(--accent) !important;
-}}
 [data-testid="stSidebar"] .stTextInput > div > div > input {{
   background: var(--input-bg) !important;
   border: 1px solid var(--border) !important;
@@ -128,7 +109,6 @@ html, body, [class*="css"] {{
   border-color: var(--accent) !important;
 }}
 
-/* ══════════ SIDEBAR LOGO ══════════ */
 .sidebar-logo {{
   padding: 1.5rem 1.25rem 1.25rem;
   border-bottom: 1px solid var(--border);
@@ -152,7 +132,6 @@ html, body, [class*="css"] {{
   text-transform: uppercase;
 }}
 
-/* ══════════ BUTTONS ══════════ */
 .stButton > button {{
   background: var(--glass) !important;
   color: var(--text1) !important;
@@ -178,7 +157,20 @@ html, body, [class*="css"] {{
   background: rgba(220,38,38,0.18) !important;
 }}
 
-/* ══════════ DOWNLOAD BUTTON ══════════ */
+[data-testid="stSidebar"] .stButton > button {{
+  width: 100% !important;
+  text-align: left !important;
+  margin-bottom: 6px !important;
+  padding: 0.6rem 1rem !important;
+  font-size: 0.82rem !important;
+}}
+
+.role-btn-active > button {{
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #ffffff !important;
+}}
+
 [data-testid="stDownloadButton"] > button {{
   background: rgba(5,150,105,0.1) !important;
   border-color: rgba(5,150,105,0.4) !important;
@@ -188,7 +180,6 @@ html, body, [class*="css"] {{
   background: rgba(5,150,105,0.18) !important;
 }}
 
-/* ══════════ TABS ══════════ */
 .stTabs [data-baseweb="tab-list"] {{
   background: var(--bg1) !important;
   border-radius: 10px !important;
@@ -215,7 +206,6 @@ html, body, [class*="css"] {{
   font-weight: 700 !important;
 }}
 
-/* ══════════ METRICS ══════════ */
 [data-testid="metric-container"] {{
   background: var(--bg1) !important;
   border: 1px solid var(--border) !important;
@@ -248,7 +238,6 @@ html, body, [class*="css"] {{
   color: #34d399 !important;
 }}
 
-/* ══════════ HEADINGS ══════════ */
 h1 {{
   font-family: 'Orbitron', sans-serif !important;
   font-size: 1.6rem !important;
@@ -270,7 +259,6 @@ h3 {{
   color: var(--text2) !important;
 }}
 
-/* ══════════ DATAFRAME ══════════ */
 [data-testid="stDataFrame"] {{
   border-radius: 12px !important;
   overflow: hidden !important;
@@ -297,13 +285,11 @@ h3 {{
   background: var(--glass) !important;
 }}
 
-/* ══════════ ALERTS ══════════ */
 .stSuccess {{ border-radius: 10px !important; }}
 .stWarning {{ border-radius: 10px !important; }}
 .stInfo    {{ border-radius: 10px !important; }}
 .stError   {{ border-radius: 10px !important; }}
 
-/* ══════════ INPUTS ══════════ */
 .stSelectbox > div > div {{
   border-radius: 8px !important;
   border: 1px solid var(--border) !important;
@@ -328,7 +314,6 @@ h3 {{
 }}
 label {{ color: var(--text2) !important; }}
 
-/* ══════════ FILE UPLOADER ══════════ */
 [data-testid="stFileUploadDropzone"] {{
   border: 2px dashed var(--border) !important;
   border-radius: 12px !important;
@@ -339,7 +324,6 @@ label {{ color: var(--text2) !important; }}
   border-color: var(--accent) !important;
 }}
 
-/* ══════════ EXPANDER ══════════ */
 [data-testid="stExpander"] {{
   border: 1px solid var(--border) !important;
   border-radius: 12px !important;
@@ -354,7 +338,6 @@ label {{ color: var(--text2) !important; }}
   font-weight: 600 !important;
 }}
 
-/* ══════════ SECTION HEADER ══════════ */
 .section-header {{
   font-family: 'Inter', sans-serif !important;
   font-size: 0.7rem;
@@ -381,7 +364,6 @@ label {{ color: var(--text2) !important; }}
   background: var(--border);
 }}
 
-/* ══════════ PAGE HEADER WRAP ══════════ */
 .page-header-wrap {{
   background: var(--bg1);
   border: 1px solid var(--border);
@@ -391,7 +373,6 @@ label {{ color: var(--text2) !important; }}
   border-left: 4px solid var(--accent);
 }}
 
-/* ══════════ SCROLLBAR ══════════ */
 ::-webkit-scrollbar {{ width: 5px; height: 5px; }}
 ::-webkit-scrollbar-track {{ background: var(--bg2); }}
 ::-webkit-scrollbar-thumb {{
@@ -399,7 +380,6 @@ label {{ color: var(--text2) !important; }}
   border-radius: 3px;
 }}
 
-/* ══════════ HR ══════════ */
 hr {{
   border: none !important;
   height: 1px !important;
@@ -407,10 +387,8 @@ hr {{
   margin: 1.5rem 0 !important;
 }}
 
-/* ══════════ CAPTION ══════════ */
 .stCaption {{ color: var(--text3) !important; font-size: 0.72rem !important; }}
 
-/* ══════════ CARD STYLES ══════════ */
 .data-card {{
   background: var(--bg1);
   border: 1px solid var(--border);
@@ -419,17 +397,26 @@ hr {{
 }}
 .data-card:hover {{ border-color: var(--accent); }}
 
-/* ══════════ PROGRESS BAR ══════════ */
 .prog-bar {{
   background: var(--accent);
   height: 4px;
   border-radius: 999px;
 }}
 
-/* ══════════ STATUS BADGES ══════════ */
 .badge-paid    {{ border-color: rgba(5,150,105,0.5) !important; }}
 .badge-partial {{ border-color: rgba(14,165,233,0.5) !important; }}
 .badge-unpaid  {{ border-color: rgba(220,38,38,0.5) !important; }}
+
+.role-section-label {{
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 1rem 0 0.5rem 0;
+  padding: 0 0.25rem;
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -752,9 +739,36 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-role = st.sidebar.selectbox("Access Level", ["Student", "Hall Admin", "Senior Warden"])
+# ── Role Selection Buttons ─────────────────────────────────────
+st.sidebar.markdown('<p class="role-section-label">Access Level</p>', unsafe_allow_html=True)
 
+if "selected_role" not in st.session_state:
+    st.session_state["selected_role"] = "Student"
 
+role_options = [
+    ("Student",        "◎  Student"),
+    ("Hall Admin",     "⬡  Hall Admin"),
+    ("Senior Warden",  "★  Senior Warden"),
+]
+
+for role_key, role_label in role_options:
+    is_active = st.session_state["selected_role"] == role_key
+    if is_active:
+        st.sidebar.markdown(f"""
+<style>
+div[data-testid="stSidebar"] div[data-testid="stButton"]:has(button[key="role_btn_{role_key}"]) button,
+div[data-testid="stSidebar"] button[aria-label="{role_label}"] {{
+  background: var(--accent) !important;
+  border-color: #1d4ed8 !important;
+  color: #ffffff !important;
+}}
+</style>
+""", unsafe_allow_html=True)
+    if st.sidebar.button(role_label, key=f"role_btn_{role_key}", use_container_width=True):
+        st.session_state["selected_role"] = role_key
+        st.rerun()
+
+role = st.session_state["selected_role"]
 
 st.sidebar.markdown("""
 <div style="padding:14px 12px;margin-top:10px;
@@ -837,12 +851,10 @@ if role == "Student":
                 key=f"files_{room}_{idx}"
             )
 
-            # ── AI Amount Extraction ─────────────────────────────
             ai_extract_key = f"ai_amt_{room}_{idx}"
             ai_done_key    = f"ai_done_{room}_{idx}"
 
             if uploaded_files:
-                # Auto-extract on first upload (only once per file set)
                 file_hashes_now = [hashlib.md5(f.getvalue()).hexdigest() for f in uploaded_files]
                 prev_hashes_key = f"prev_hashes_{room}_{idx}"
 
@@ -897,7 +909,6 @@ if role == "Student":
                                 )
                                 if resp.status_code == 200:
                                     raw = resp.json()["content"][0]["text"].strip()
-                                    # Clean: extract first number found
                                     import re as _re
                                     nums = _re.findall(r'\d[\d,]*', raw)
                                     if nums:
@@ -905,7 +916,6 @@ if role == "Student":
                                         total_extracted += val
 
                             if total_extracted > 0:
-                                # Cap at total due
                                 final_amt = min(total_extracted, int(total))
                                 st.session_state[ai_extract_key] = final_amt
                                 st.session_state[ai_done_key] = True
@@ -914,11 +924,9 @@ if role == "Student":
                                 st.session_state[ai_done_key] = True
 
                         except Exception as _e:
-                            # Fallback: use full total
                             st.session_state[ai_extract_key] = int(total)
                             st.session_state[ai_done_key] = True
 
-                # Show extracted amount (read-only display)
                 extracted_amount = st.session_state.get(ai_extract_key, int(total))
 
                 st.markdown(f"""
@@ -984,7 +992,6 @@ if role == "Student":
                             st.success(f"✓ Receipt transmitted. Paid: Rs {amount_paid_input:,} · Remaining: Rs {rem:,}")
                         else:
                             st.success(f"✓ Full payment transmitted. Amount: Rs {amount_paid_input:,}")
-                        # Reset AI state for this card
                         st.session_state.pop(ai_extract_key, None)
                         st.session_state.pop(ai_done_key, None)
                         st.session_state.pop(prev_hashes_key, None)
@@ -1014,7 +1021,6 @@ elif role == "Hall Admin":
         "⬆ Upload Dues", "◉ Dashboard", "⚠ Pending", "◎ Receipts", "✕ Manage"
     ])
 
-    # ── Upload Dues ──────────────────────────────────────────────
     with tab1:
         section_label("Upload Monthly Dues")
         years       = list(range(2025, 2032))
@@ -1099,7 +1105,6 @@ elif role == "Hall Admin":
 
             st.success(f"✓ {len(df)} student records uploaded for {month}.")
 
-    # ── Dashboard ────────────────────────────────────────────────
     with tab2:
         if dues.empty:
             st.info("No data available. Upload dues first.")
@@ -1147,7 +1152,6 @@ elif role == "Hall Admin":
                 lambda r: "Paid" if r["Paid (Rs)"] >= r["Total"] else ("Partial" if r["Paid (Rs)"] > 0 else "Unpaid"), axis=1
             )
 
-            # ── Summary stats ────────────────────────────────────────
             paid_cnt    = (df_d["Status"] == "Paid").sum()
             partial_cnt = (df_d["Status"] == "Partial").sum()
             unpaid_cnt  = (df_d["Status"] == "Unpaid").sum()
@@ -1162,24 +1166,19 @@ elif role == "Hall Admin":
 
             st.markdown("<br>", unsafe_allow_html=True)
 
-            # ── Charts row ───────────────────────────────────────────
             try:
                 import plotly.graph_objects as go
                 import plotly.express as px
 
                 ch1, ch2, ch3, ch4 = st.columns(4)
 
-                # Chart 1 — Payment status donut
                 with ch1:
                     section_label("Payment Status")
                     fig_s = go.Figure(data=[go.Pie(
                         labels=["Paid","Partial","Unpaid"],
                         values=[paid_cnt, partial_cnt, unpaid_cnt],
                         hole=0.6,
-                        marker=dict(
-                            colors=["#10b981","#3b82f6","#ef4444"],
-                            line=dict(color="rgba(0,0,0,0)", width=0)
-                        ),
+                        marker=dict(colors=["#10b981","#3b82f6","#ef4444"], line=dict(color="rgba(0,0,0,0)", width=0)),
                         textinfo="percent",
                         textfont=dict(size=11, family="Inter", color="#fff"),
                         hovertemplate="<b>%{label}</b><br>%{value} students<extra></extra>"
@@ -1188,30 +1187,20 @@ elif role == "Hall Admin":
                         showlegend=False, height=200,
                         margin=dict(t=5,b=5,l=5,r=5),
                         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                        annotations=[dict(
-                            text=f"<b>{len(df_d)}</b>",
-                            x=0.5, y=0.5, font_size=18, font_color="#3b82f6",
-                            font_family="Inter", showarrow=False
-                        )]
+                        annotations=[dict(text=f"<b>{len(df_d)}</b>", x=0.5, y=0.5,
+                            font_size=18, font_color="#3b82f6", font_family="Inter", showarrow=False)]
                     )
                     st.plotly_chart(fig_s, use_container_width=True, config={"displayModeBar": False})
 
-                # Chart 2 — Collection vs Total bar
                 with ch2:
                     section_label("Collection vs Total")
                     fig_cv = go.Figure()
-                    fig_cv.add_trace(go.Bar(
-                        name="Total", x=["Dues"],
-                        y=[int(total_dues)], marker_color="rgba(0,245,255,0.25)",
-                        marker_line_width=0,
-                        hovertemplate="Total: Rs %{y:,.0f}<extra></extra>"
-                    ))
-                    fig_cv.add_trace(go.Bar(
-                        name="Collected", x=["Dues"],
-                        y=[int(collected)], marker_color="#10b981",
-                        marker_line_width=0,
-                        hovertemplate="Collected: Rs %{y:,.0f}<extra></extra>"
-                    ))
+                    fig_cv.add_trace(go.Bar(name="Total", x=["Dues"], y=[int(total_dues)],
+                        marker_color="rgba(0,245,255,0.25)", marker_line_width=0,
+                        hovertemplate="Total: Rs %{y:,.0f}<extra></extra>"))
+                    fig_cv.add_trace(go.Bar(name="Collected", x=["Dues"], y=[int(collected)],
+                        marker_color="#10b981", marker_line_width=0,
+                        hovertemplate="Collected: Rs %{y:,.0f}<extra></extra>"))
                     fig_cv.update_layout(
                         barmode="overlay", height=200,
                         margin=dict(t=5,b=5,l=5,r=5),
@@ -1223,7 +1212,6 @@ elif role == "Hall Admin":
                     )
                     st.plotly_chart(fig_cv, use_container_width=True, config={"displayModeBar": False})
 
-                # Chart 3 — Top unpaid students (horizontal bar)
                 with ch3:
                     section_label("Top Unpaid")
                     top_unpaid = df_d[df_d["Status"] != "Paid"].nlargest(5, "Remaining (Rs)")
@@ -1232,11 +1220,8 @@ elif role == "Hall Admin":
                             x=top_unpaid["Remaining (Rs)"].tolist(),
                             y=top_unpaid["Name"].tolist(),
                             orientation="h",
-                            marker=dict(
-                                color=top_unpaid["Remaining (Rs)"].tolist(),
-                                colorscale=[[0,"#f59e0b"],[1,"#ef4444"]],
-                                showscale=False, line=dict(width=0)
-                            ),
+                            marker=dict(color=top_unpaid["Remaining (Rs)"].tolist(),
+                                colorscale=[[0,"#f59e0b"],[1,"#ef4444"]], showscale=False, line=dict(width=0)),
                             text=[f"Rs {v:,}" for v in top_unpaid["Remaining (Rs)"].tolist()],
                             textposition="outside",
                             textfont=dict(size=9, color="#94a3b8"),
@@ -1252,20 +1237,16 @@ elif role == "Hall Admin":
                     else:
                         st.success("All students paid!")
 
-                # Chart 4 — Dues breakdown (food vs service vs previous)
                 with ch4:
                     section_label("Dues Breakdown")
-                    fd_tot  = int(df_d["Food_Dues"].sum())
-                    sv_tot  = int(df_d["Service_Charges"].sum())
-                    pr_tot  = int(df_d["Previous"].sum())
+                    fd_tot = int(df_d["Food_Dues"].sum())
+                    sv_tot = int(df_d["Service_Charges"].sum())
+                    pr_tot = int(df_d["Previous"].sum())
                     fig_br = go.Figure(data=[go.Pie(
                         labels=["Food","Service","Arrears"],
                         values=[fd_tot, sv_tot, pr_tot],
                         hole=0.55,
-                        marker=dict(
-                            colors=["#8b5cf6","#3b82f6","#f59e0b"],
-                            line=dict(color="rgba(0,0,0,0)", width=0)
-                        ),
+                        marker=dict(colors=["#8b5cf6","#3b82f6","#f59e0b"], line=dict(color="rgba(0,0,0,0)", width=0)),
                         textinfo="percent",
                         textfont=dict(size=10, family="Inter", color="#fff"),
                         hovertemplate="<b>%{label}</b><br>Rs %{value:,.0f}<extra></extra>"
@@ -1292,10 +1273,8 @@ elif role == "Hall Admin":
                 return ["background-color:rgba(255,45,85,0.07);color:#ff6b6b;font-weight:500"] * len(row)
 
             display_cols = ["RoomNo","Name","Food_Dues","Service_Charges","Previous","Total","Paid (Rs)","Remaining (Rs)","Status"]
-            st.dataframe(
-                df_d[display_cols].style.apply(row_color, axis=1),
-                use_container_width=True, hide_index=True
-            )
+            st.dataframe(df_d[display_cols].style.apply(row_color, axis=1),
+                         use_container_width=True, hide_index=True)
 
             st.markdown("<br>", unsafe_allow_html=True)
             section_label("Collection Chart")
@@ -1304,12 +1283,9 @@ elif role == "Hall Admin":
 
             st.markdown("---")
             csv = df_d[display_cols].to_csv(index=False).encode("utf-8")
-            st.download_button(
-                f"⬇ Download {sel_month} Report (CSV)",
-                csv, file_name=f"{hall}_{sel_month}.csv", mime="text/csv"
-            )
+            st.download_button(f"⬇ Download {sel_month} Report (CSV)", csv,
+                               file_name=f"{hall}_{sel_month}.csv", mime="text/csv")
 
-    # ── Pending ──────────────────────────────────────────────────
     with tab3:
         if dues.empty:
             st.info("No data available.")
@@ -1349,7 +1325,6 @@ elif role == "Hall Admin":
                 st.dataframe(pending[[c for c in show if c in pending.columns]],
                              use_container_width=True, hide_index=True)
 
-    # ── Receipts ─────────────────────────────────────────────────
     with tab4:
         if payments.empty:
             st.info("No receipts submitted yet.")
@@ -1375,7 +1350,6 @@ elif role == "Hall Admin":
                 else:
                     st.caption("Receipt image not available on server (cloud restart clears files)")
 
-    # ── Manage Months ────────────────────────────────────────────
     with tab5:
         if dues.empty:
             st.info("No months available.")
@@ -1554,11 +1528,8 @@ elif role == "Senior Warden":
                             font=dict(size=10, family="Inter", color="#94a3b8")),
                 margin=dict(t=10, b=10, l=10, r=10), height=260,
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                annotations=[dict(
-                    text=f"<b>{overall_pct}%</b>",
-                    x=0.5, y=0.5, font_size=20, font_family="Inter",
-                    font_color="#3b82f6", showarrow=False
-                )]
+                annotations=[dict(text=f"<b>{overall_pct}%</b>", x=0.5, y=0.5,
+                    font_size=20, font_family="Inter", font_color="#3b82f6", showarrow=False)]
             )
             st.plotly_chart(fig_pie, use_container_width=True, config={"displayModeBar": False})
         except ImportError:
@@ -1573,16 +1544,12 @@ elif role == "Senior Warden":
             remaining_vals = [s["Remaining"] for s in summary]
 
             fig_bar = go.Figure()
-            fig_bar.add_trace(go.Bar(
-                name="Collected", x=hall_names, y=collected_vals,
+            fig_bar.add_trace(go.Bar(name="Collected", x=hall_names, y=collected_vals,
                 marker_color="#10b981", marker_line_width=0,
-                hovertemplate="<b>%{x}</b><br>Collected: Rs %{y:,.0f}<extra></extra>"
-            ))
-            fig_bar.add_trace(go.Bar(
-                name="Remaining", x=hall_names, y=remaining_vals,
+                hovertemplate="<b>%{x}</b><br>Collected: Rs %{y:,.0f}<extra></extra>"))
+            fig_bar.add_trace(go.Bar(name="Remaining", x=hall_names, y=remaining_vals,
                 marker_color="#ef4444", marker_line_width=0,
-                hovertemplate="<b>%{x}</b><br>Remaining: Rs %{y:,.0f}<extra></extra>"
-            ))
+                hovertemplate="<b>%{x}</b><br>Remaining: Rs %{y:,.0f}<extra></extra>"))
             fig_bar.update_layout(
                 barmode="stack", showlegend=True,
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1,
@@ -1619,11 +1586,8 @@ elif role == "Senior Warden":
                             font=dict(size=10, family="Inter", color="#94a3b8")),
                 margin=dict(t=10, b=10, l=10, r=10), height=240,
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                annotations=[dict(
-                    text=f"<b>{total_students_all}</b>",
-                    x=0.5, y=0.5, font_size=16, font_family="Inter",
-                    font_color="#3b82f6", showarrow=False
-                )]
+                annotations=[dict(text=f"<b>{total_students_all}</b>", x=0.5, y=0.5,
+                    font_size=16, font_family="Inter", font_color="#3b82f6", showarrow=False)]
             )
             st.plotly_chart(fig_d, use_container_width=True, config={"displayModeBar": False})
 
@@ -1633,11 +1597,8 @@ elif role == "Senior Warden":
             hall_pcts   = [s["Pct"] for s in summary if s["Total"] > 0]
             fig_h = go.Figure(go.Bar(
                 x=hall_pcts, y=hall_labels, orientation="h",
-                marker=dict(
-                    color=hall_pcts,
-                    colorscale=[[0,"#ef4444"],[0.5,"#f59e0b"],[1,"#10b981"]],
-                    showscale=False, line=dict(width=0),
-                ),
+                marker=dict(color=hall_pcts, colorscale=[[0,"#ef4444"],[0.5,"#f59e0b"],[1,"#10b981"]],
+                    showscale=False, line=dict(width=0)),
                 text=[f"{p}%" for p in hall_pcts],
                 textposition="outside",
                 textfont=dict(size=10, family="Inter", color="#94a3b8"),
