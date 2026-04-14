@@ -81,6 +81,23 @@ html, body, [class*="css"] {{
 #MainMenu, footer, header {{ visibility: hidden; }}
 .stDeployButton {{ display: none; }}
 
+/* ── Sidebar collapse/expand button — MUST be visible ── */
+[data-testid="stSidebarCollapseButton"],
+[data-testid="collapsedControl"],
+button[kind="headerNoPadding"],
+[data-testid="stSidebarCollapseButton"] button,
+[data-testid="collapsedControl"] button {{
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  color: var(--text1) !important;
+  background: var(--bg1) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  z-index: 9999 !important;
+}}
+
 /* ── App base ── */
 .stApp {{
   background: var(--bg0) !important;
@@ -579,7 +596,14 @@ def page_header(title, subtitle=""):
     st.markdown(f"""
 <div class="page-header-wrap">
   <h1 style="margin:0;padding:0;">{title}</h1>
-  {"" if not subtitle else f'<p style="color:var(--text2);margin:8px 0 0;font-size:0.82rem;font-family:Inter,sans-serif;letter-spacing:0.02em;">{subtitle}</p>'}
+  {"" if not subtitle else f'<p style="color:var(--text2);margin:6px 0 0;font-size:0.8rem;font-family:Inter,sans-serif;letter-spacing:0.02em;">{subtitle}</p>'}
+  <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+    <span style="font-size:0.75rem;font-weight:600;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;">UET Mess Dues System</span>
+    <span style="font-family:'Orbitron',sans-serif;font-size:0.72rem;font-weight:700;
+      color:#60a5fa;
+      text-shadow:0 0 12px rgba(96,165,250,0.65), 0 0 24px rgba(96,165,250,0.3);
+      letter-spacing:0.04em;">Designed &amp; Developed by Abdul Hadi &nbsp;·&nbsp; 2025 (S) &nbsp;·&nbsp; CYS 90</span>
+  </div>
 </div>
 """, unsafe_allow_html=True)
     _c1, _c2 = st.columns([8, 1])
