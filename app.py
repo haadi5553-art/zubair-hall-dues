@@ -877,95 +877,133 @@ if role == "Student":
                 if not st.session_state.get(ai_done_key, False):
                     with st.spinner("🔍 Scanning receipt for amount..."):
                         try:
-                            import base64, json, requests as _req
+                            import base64, requests as _req, re as _re
+
+                            # ── Get API key from secrets ──────────────────────
+                            try:
+                                _api_key = st.secrets["ANTHROPIC_API_KEY"]
+                            except Exception:
+                                try:
+                                    _api_key = st.secrets["anthropic"]["api_key"]
+                                except Exception:
+                                    _api_key = None
 
                             total_extracted = 0
-                            for f in uploaded_files:
-                                img_bytes  = f.getvalue()
-                                b64_img    = base64.b64encode(img_bytes).decode("utf-8")
-                                ext        = f.name.lower().split(".")[-1]
-                                media_type = "image/jpeg" if ext in ["jpg","jpeg"] else f"image/{ext}"
+                            ai_success = False
 
-                                payload = {
-                                    "model": "claude-opus-4-6",
-                                    "max_tokens": 200,
-                                    "messages": [{
-                                        "role": "user",
-                                        "content": [
-                                            {
-                                                "type": "image",
-                                                "source": {
-                                                    "type": "base64",
-                                                    "media_type": media_type,
-                                                    "data": b64_img
+                            if _api_key:
+                                for f in uploaded_files:
+                                    img_bytes  = f.getvalue()
+                                    b64_img    = base64.b64encode(img_bytes).decode("utf-8")
+                                    ext        = f.name.lower().split(".")[-1]
+                                    media_type = "image/jpeg" if ext in ["jpg","jpeg"] else f"image/{ext}"
+
+                                    payload = {
+                                        "model": "claude-opus-4-5",
+                                        "max_tokens": 100,
+                                        "messages": [{
+                                            "role": "user",
+                                            "content": [
+                                                {
+                                                    "type": "image",
+                                                    "source": {
+                                                        "type": "base64",
+                                                        "media_type": media_type,
+                                                        "data": b64_img
+                                                    }
+                                                },
+                                                {
+                                                    "type": "text",
+                                                    "text": (
+                                                        "This is a payment receipt. "
+                                                        "Look for the TOTAL AMOUNT PAID on this receipt. "
+                                                        "Reply with ONLY a single integer number — no text, no Rs, no commas. "
+                                                        "Example reply: 4500"
+                                                    )
                                                 }
-                                            },
-                                            {
-                                                "type": "text",
-                                                "text": (
-                                                    "This is a payment receipt image. "
-                                                    "Extract ONLY the total paid amount as a plain integer number (no Rs, no commas, no text). "
-                                                    "If multiple amounts exist, return the TOTAL/GRAND TOTAL. "
-                                                    "Reply with ONLY the number, nothing else. Example: 4500"
-                                                )
-                                            }
-                                        ]
-                                    }]
-                                }
+                                            ]
+                                        }]
+                                    }
 
-                                resp = _req.post(
-                                    "https://api.anthropic.com/v1/messages",
-                                    headers={"Content-Type": "application/json"},
-                                    json=payload,
-                                    timeout=30
-                                )
-                                if resp.status_code == 200:
-                                    raw = resp.json()["content"][0]["text"].strip()
-                                    # Clean: extract first number found
-                                    import re as _re
-                                    nums = _re.findall(r'\d[\d,]*', raw)
-                                    if nums:
-                                        val = int(nums[0].replace(",",""))
-                                        total_extracted += val
+                                    resp = _req.post(
+                                        "https://api.anthropic.com/v1/messages",
+                                        headers={
+                                            "Content-Type": "application/json",
+                                            "x-api-key": _api_key,
+                                            "anthropic-version": "2023-06-01"
+                                        },
+                                        json=payload,
+                                        timeout=30
+                                    )
+                                    if resp.status_code == 200:
+                                        raw = resp.json()["content"][0]["text"].strip()
+                                        nums = _re.findall(r'\d[\d,]*', raw)
+                                        if nums:
+                                            val = int(nums[0].replace(",", ""))
+                                            total_extracted += val
+                                            ai_success = True
 
-                            if total_extracted > 0:
-                                # Cap at total due
-                                final_amt = min(total_extracted, int(total))
-                                st.session_state[ai_extract_key] = final_amt
-                                st.session_state[ai_done_key] = True
+                            if ai_success and total_extracted > 0:
+                                # ── IMPORTANT: do NOT cap or override with total ──
+                                # Store exactly what AI detected
+                                st.session_state[ai_extract_key] = total_extracted
+                                st.session_state["ai_success_" + ai_done_key] = True
                             else:
-                                st.session_state[ai_extract_key] = int(total)
-                                st.session_state[ai_done_key] = True
-
-                        except Exception as _e:
-                            # Fallback: use full total
-                            st.session_state[ai_extract_key] = int(total)
+                                # AI failed or no key — store None so user must enter manually
+                                st.session_state[ai_extract_key] = None
+                                st.session_state["ai_success_" + ai_done_key] = False
                             st.session_state[ai_done_key] = True
 
-                # Show extracted amount (read-only display)
-                extracted_amount = st.session_state.get(ai_extract_key, int(total))
+                        except Exception as _e:
+                            st.session_state[ai_extract_key] = None
+                            st.session_state["ai_success_" + ai_done_key] = False
+                            st.session_state[ai_done_key] = True
 
-                st.markdown(f"""
+                # ── Show result & let user edit ──────────────────────
+                extracted_amount = st.session_state.get(ai_extract_key, None)
+                ai_worked = st.session_state.get("ai_success_" + ai_done_key, False)
+
+                if ai_worked and extracted_amount is not None:
+                    color = "#059669" if extracted_amount >= int(total) else "#0ea5e9"
+                    st.markdown(f"""
 <div style="background:rgba(5,150,105,0.08);border:1px solid rgba(5,150,105,0.3);
   border-radius:10px;padding:12px 16px;margin:8px 0;display:flex;
   justify-content:space-between;align-items:center;">
   <div>
     <div style="font-family:Inter,sans-serif;font-size:0.65rem;color:#64748b;
-      letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">AI Detected Amount</div>
+      letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">🤖 AI Detected Amount</div>
     <div style="font-family:Inter,sans-serif;font-size:1.25rem;font-weight:800;
-      color:#059669;font-variant-numeric:tabular-nums;">
+      color:{color};font-variant-numeric:tabular-nums;">
       Rs&nbsp;{extracted_amount:,}
     </div>
   </div>
-  <div style="font-size:1.4rem;">🤖</div>
+  <div style="font-size:0.7rem;color:#64748b;text-align:right;">
+    Due: Rs {int(total):,}
+  </div>
 </div>
 """, unsafe_allow_html=True)
+                else:
+                    st.warning("⚠ Could not auto-detect amount from receipt. Please enter manually below.")
 
-                if extracted_amount < int(total):
-                    rem_after = int(total) - extracted_amount
-                    st.info(f"⚠ Partial payment detected. Remaining after this: Rs {rem_after:,}")
+                # ── Always show editable number input ────────────────
+                default_val = extracted_amount if (ai_worked and extracted_amount) else 0
+                amount_paid_input = st.number_input(
+                    "Amount Paid (Rs) — verify or correct if needed",
+                    min_value=0,
+                    max_value=int(total) * 10,   # allow overpay detection
+                    value=int(default_val),
+                    step=10,
+                    key=f"amt_input_{room}_{idx}"
+                )
 
-                amount_paid_input = extracted_amount
+                # Cap to total and warn
+                if amount_paid_input > int(total):
+                    st.warning(f"⚠ Entered amount Rs {amount_paid_input:,} exceeds total due Rs {int(total):,}. It will be capped.")
+                    amount_paid_input = int(total)
+
+                if 0 < amount_paid_input < int(total):
+                    rem_after = int(total) - amount_paid_input
+                    st.info(f"Partial payment. Remaining after this: Rs {rem_after:,}")
 
                 if st.button(f"⬆ Transmit Receipt — Room {room}", key=f"submit_{room}_{idx}"):
                     invalidate_cache()
