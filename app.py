@@ -805,6 +805,12 @@ if role == "Student":
 
     page_header(f"{hall}", "STUDENT PORTAL · VIEW DUES & SUBMIT RECEIPTS")
 
+    # ── Quick Complaint Button (top, always visible) ─────────────
+    _cb1, _cb2, _cb3 = st.columns([3, 2, 3])
+    with _cb2:
+        if st.button("📢 COMPLAINT BOX", key="top_complaint_btn", use_container_width=True):
+            st.session_state["show_complaint_box"] = True
+
     if dues.empty:
         st.warning("⚠ No dues have been uploaded for this hall yet.")
         st.stop()
@@ -947,48 +953,84 @@ if role == "Student":
 
     # ── Complaint Box ────────────────────────────────────────────
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("""
-<div style="background:var(--bg1);border:1px solid var(--border);border-left:4px solid #d97706;
-  border-radius:14px;padding:18px 22px;margin-top:1rem;">
-  <div style="font-family:Orbitron,sans-serif;font-size:0.85rem;font-weight:700;
-    color:#f59e0b;letter-spacing:0.05em;margin-bottom:4px;">📢 COMPLAINT BOX</div>
-  <div style="font-size:0.72rem;color:var(--text3);">Submit your complaint — it will reach Hall Admin directly.</div>
+    st.markdown('<div id="complaint-box-anchor"></div>', unsafe_allow_html=True)
+
+    # Show/hide toggle
+    if "show_complaint_box" not in st.session_state:
+        st.session_state["show_complaint_box"] = False
+
+    # Orange banner button to open complaint box
+    if not st.session_state["show_complaint_box"]:
+        st.markdown("""
+<div style="background:rgba(217,119,6,0.1);border:1px solid rgba(217,119,6,0.4);
+  border-radius:14px;padding:16px 22px;cursor:pointer;text-align:center;">
+  <span style="font-family:Orbitron,sans-serif;font-size:0.85rem;font-weight:700;
+    color:#f59e0b;letter-spacing:0.05em;">📢 COMPLAINT BOX — Click to Open</span>
+  <div style="font-size:0.7rem;color:var(--text3);margin-top:4px;">
+    Submit a complaint about mess, cleanliness, electricity, water, or fans
+  </div>
 </div>
 """, unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    complaint_categories = {
-        "🍽️ Mess Food Quality": "Food Quality",
-        "🌀 Fan / Ventilation": "Fan",
-        "💧 Water Cooler": "Water Cooler",
-        "🧹 Cleanliness": "Cleanliness",
-        "💡 Electricity / Lights": "Electricity",
-        "📝 Other": "Other",
-    }
-
-    selected_cat_label = st.selectbox(
-        "Complaint Category",
-        list(complaint_categories.keys()),
-        key="complaint_cat"
-    )
-    selected_cat = complaint_categories[selected_cat_label]
-
-    complaint_text = st.text_area(
-        "Describe your complaint (max 50 words)",
-        placeholder="Write your complaint here...",
-        key="complaint_text",
-        height=100
-    )
-
-    word_count = len(complaint_text.strip().split()) if complaint_text.strip() else 0
-    if word_count > 0:
-        color = "#dc2626" if word_count > 50 else "#059669"
-        st.markdown(f'<div style="font-size:0.7rem;color:{color};margin-top:-8px;">{word_count}/50 words</div>', unsafe_allow_html=True)
-
-    complaint_submitted_key = "complaint_submitted_flag"
-
-    if st.session_state.get(complaint_submitted_key, False):
+        _oc1, _oc2, _oc3 = st.columns([3,2,3])
+        with _oc2:
+            if st.button("📢 Open Complaint Box", key="open_complaint_btn", use_container_width=True):
+                st.session_state["show_complaint_box"] = True
+                st.rerun()
+    else:
         st.markdown("""
+<div style="background:rgba(217,119,6,0.1);border:2px solid rgba(217,119,6,0.5);
+  border-radius:14px;padding:18px 22px;margin-bottom:1rem;">
+  <div style="font-family:Orbitron,sans-serif;font-size:0.9rem;font-weight:700;
+    color:#f59e0b;letter-spacing:0.05em;margin-bottom:4px;">📢 COMPLAINT BOX</div>
+  <div style="font-size:0.72rem;color:var(--text3);">Fill in your details and describe your complaint. It will go directly to Hall Admin.</div>
+</div>
+""", unsafe_allow_html=True)
+
+        complaint_categories = {
+            "🍽️ Mess Food Quality": "Food Quality",
+            "🌀 Fan / Ventilation": "Fan",
+            "💧 Water Cooler": "Water Cooler",
+            "🧹 Cleanliness": "Cleanliness",
+            "💡 Electricity / Lights": "Electricity",
+            "📝 Other": "Other",
+        }
+
+        # Student identity fields
+        section_label("Your Details (Required)")
+        ci1, ci2 = st.columns(2)
+        with ci1:
+            c_reg_no   = st.text_input("Registration No *", placeholder="e.g. 2021-CYS-090", key="c_reg_no")
+            c_name     = st.text_input("Full Name *", placeholder="e.g. Abdul Hadi", key="c_name")
+        with ci2:
+            c_room_no  = st.text_input("Room No *", placeholder="e.g. 12A", key="c_room_no")
+            c_phone    = st.text_input("Phone No *", placeholder="e.g. 03001234567", key="c_phone")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        section_label("Complaint Details")
+
+        selected_cat_label = st.selectbox(
+            "Complaint Category",
+            list(complaint_categories.keys()),
+            key="complaint_cat"
+        )
+        selected_cat = complaint_categories[selected_cat_label]
+
+        complaint_text = st.text_area(
+            "Describe your complaint (max 50 words)",
+            placeholder="Write your complaint here...",
+            key="complaint_text",
+            height=100
+        )
+
+        word_count = len(complaint_text.strip().split()) if complaint_text.strip() else 0
+        if word_count > 0:
+            color = "#dc2626" if word_count > 50 else "#059669"
+            st.markdown(f'<div style="font-size:0.7rem;color:{color};margin-top:-8px;">{word_count}/50 words</div>', unsafe_allow_html=True)
+
+        complaint_submitted_key = "complaint_submitted_flag"
+
+        if st.session_state.get(complaint_submitted_key, False):
+            st.markdown("""
 <div style="background:rgba(5,150,105,0.12);border:1px solid rgba(5,150,105,0.5);
   border-radius:10px;padding:14px 18px;margin:10px 0;
   display:flex;align-items:center;gap:12px;">
@@ -999,47 +1041,69 @@ if role == "Student":
   </div>
 </div>
 """, unsafe_allow_html=True)
+            st.session_state["complaint_submitted_flag"] = False
 
-    if st.button("📤 Submit Complaint", key="submit_complaint_btn"):
-        if not complaint_text.strip():
-            st.error("⚠ Please write your complaint before submitting.")
-        elif word_count > 50:
-            st.error(f"⚠ Complaint exceeds 50 words ({word_count} words). Please shorten it.")
-        else:
-            # Save complaint to Google Sheets
-            try:
-                now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                complaint_sheet_name = f"{hall}_Complaints"
+        _sc1, _sc2, _sc3 = st.columns([2,1,2])
+        with _sc2:
+            submit_comp = st.button("📤 Submit Complaint", key="submit_complaint_btn", use_container_width=True)
 
-                # Load existing complaints
-                fresh_all = load_all_sheets_data()
-                comp_key  = find_sheet_key(fresh_all, complaint_sheet_name)
-                if comp_key and not fresh_all[comp_key].empty:
-                    existing_complaints = fresh_all[comp_key].copy()
-                else:
-                    existing_complaints = pd.DataFrame(columns=["Date","Hall","Category","Room","Complaint","Status"])
+        if submit_comp:
+            missing = []
+            if not c_reg_no.strip():  missing.append("Registration No")
+            if not c_name.strip():    missing.append("Full Name")
+            if not c_room_no.strip(): missing.append("Room No")
+            if not c_phone.strip():   missing.append("Phone No")
+            if not complaint_text.strip(): missing.append("Complaint text")
 
-                new_complaint = pd.DataFrame([{
-                    "Date": now_str,
-                    "Hall": hall,
-                    "Category": selected_cat,
-                    "Room": "General",
-                    "Complaint": complaint_text.strip(),
-                    "Status": "New"
-                }])
-                all_complaints = pd.concat([existing_complaints, new_complaint], ignore_index=True)
+            if missing:
+                st.error(f"⚠ Please fill in: {', '.join(missing)}")
+            elif word_count > 50:
+                st.error(f"⚠ Complaint exceeds 50 words ({word_count} words). Please shorten it.")
+            else:
+                try:
+                    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    complaint_sheet_name = f"{hall}_Complaints"
 
-                ws = find_or_create_worksheet(complaint_sheet_name)
-                ws.clear()
-                df_c = clean_for_sheets(all_complaints)
-                ws.update([df_c.columns.values.tolist()] + df_c.values.tolist())
-                invalidate_cache()
+                    fresh_all = load_all_sheets_data()
+                    comp_key  = find_sheet_key(fresh_all, complaint_sheet_name)
+                    if comp_key and not fresh_all[comp_key].empty:
+                        existing_complaints = fresh_all[comp_key].copy()
+                    else:
+                        existing_complaints = pd.DataFrame(columns=[
+                            "Date","Hall","Category","RegNo","Name","RoomNo","Phone","Complaint","Status"
+                        ])
 
-                st.session_state[complaint_submitted_key] = True
-                st.success("✓ Complaint submitted successfully!")
+                    new_complaint = pd.DataFrame([{
+                        "Date": now_str,
+                        "Hall": hall,
+                        "Category": selected_cat,
+                        "RegNo": c_reg_no.strip(),
+                        "Name": c_name.strip(),
+                        "RoomNo": c_room_no.strip(),
+                        "Phone": c_phone.strip(),
+                        "Complaint": complaint_text.strip(),
+                        "Status": "New"
+                    }])
+                    all_complaints = pd.concat([existing_complaints, new_complaint], ignore_index=True)
+
+                    ws = find_or_create_worksheet(complaint_sheet_name)
+                    ws.clear()
+                    df_c = clean_for_sheets(all_complaints)
+                    ws.update([df_c.columns.values.tolist()] + df_c.values.tolist())
+                    invalidate_cache()
+
+                    st.session_state[complaint_submitted_key] = True
+                    st.success("✓ Complaint submitted successfully!")
+                    st.rerun()
+                except Exception as _ce:
+                    st.error(f"Failed to submit complaint: {_ce}")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        _cl1, _cl2, _cl3 = st.columns([3,2,3])
+        with _cl2:
+            if st.button("✕ Close Complaint Box", key="close_complaint_btn", use_container_width=True):
+                st.session_state["show_complaint_box"] = False
                 st.rerun()
-            except Exception as _ce:
-                st.error(f"Failed to submit complaint: {_ce}")
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -1505,7 +1569,9 @@ elif role == "Hall Admin":
         if comp_key and not fresh_all.get(comp_key, pd.DataFrame()).empty:
             complaints_df = fresh_all[comp_key].copy()
         else:
-            complaints_df = pd.DataFrame(columns=["Date","Hall","Category","Room","Complaint","Status"])
+            complaints_df = pd.DataFrame(columns=[
+                "Date","Hall","Category","RegNo","Name","RoomNo","Phone","Complaint","Status"
+            ])
 
         COMPLAINT_CATEGORIES = ["Food Quality", "Fan", "Water Cooler", "Cleanliness", "Electricity", "Other"]
         CATEGORY_ICONS = {
@@ -1513,19 +1579,22 @@ elif role == "Hall Admin":
             "Cleanliness": "🧹", "Electricity": "💡", "Other": "📝"
         }
 
+        total_comp = len(complaints_df)
+        st.markdown(f"""
+<div style="background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.3);
+  border-radius:12px;padding:14px 18px;margin-bottom:1rem;
+  display:flex;justify-content:space-between;align-items:center;">
+  <span style="font-family:Orbitron,sans-serif;font-size:0.8rem;font-weight:700;color:#f59e0b;">
+    📢 {hall} — Total Complaints: {total_comp}
+  </span>
+  <span style="font-size:0.72rem;color:var(--text3);">Sorted newest first</span>
+</div>
+""", unsafe_allow_html=True)
+
         if complaints_df.empty:
             st.info("No complaints submitted yet.")
         else:
-            # Filter by category
-            filter_options = ["All Categories"] + COMPLAINT_CATEGORIES
-            selected_filter = st.selectbox("Filter by Category", filter_options, key="admin_comp_filter")
-
-            filtered_df = complaints_df.copy()
-            if selected_filter != "All Categories":
-                filtered_df = filtered_df[filtered_df["Category"] == selected_filter]
-
-            # Summary counts
-            st.markdown("<br>", unsafe_allow_html=True)
+            # Category count row
             cat_cols = st.columns(len(COMPLAINT_CATEGORIES))
             for ci, cat in enumerate(COMPLAINT_CATEGORIES):
                 count = len(complaints_df[complaints_df["Category"] == cat]) if "Category" in complaints_df.columns else 0
@@ -1533,45 +1602,72 @@ elif role == "Hall Admin":
                 with cat_cols[ci]:
                     st.markdown(f"""
 <div style="background:var(--bg1);border:1px solid var(--border);border-radius:10px;
-  padding:12px 10px;text-align:center;cursor:pointer;">
-  <div style="font-size:1.4rem;">{icon}</div>
+  padding:12px 8px;text-align:center;">
+  <div style="font-size:1.3rem;">{icon}</div>
   <div style="font-size:1.1rem;font-weight:800;color:var(--text1);">{count}</div>
-  <div style="font-size:0.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;">{cat}</div>
+  <div style="font-size:0.58rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;">{cat}</div>
 </div>
 """, unsafe_allow_html=True)
 
             st.markdown("<br>", unsafe_allow_html=True)
 
-            # Download button
-            csv_comp = filtered_df.to_csv(index=False).encode("utf-8")
-            fname    = f"{hall}_complaints_{selected_filter.replace(' ','_')}.csv"
-            st.download_button(f"⬇ Download {selected_filter} Complaints (CSV)", csv_comp,
-                               file_name=fname, mime="text/csv", key="dl_complaints")
+            # Filter + Download row
+            f1, f2 = st.columns([2,1])
+            with f1:
+                filter_options  = ["All Categories"] + COMPLAINT_CATEGORIES
+                selected_filter = st.selectbox("Filter by Category", filter_options, key="admin_comp_filter")
+            with f2:
+                filtered_df = complaints_df.copy()
+                if selected_filter != "All Categories":
+                    filtered_df = filtered_df[filtered_df["Category"] == selected_filter]
+                csv_comp = filtered_df.to_csv(index=False).encode("utf-8")
+                fname    = f"{hall}_complaints_{selected_filter.replace(' ','_')}.csv"
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.download_button(f"⬇ Download CSV", csv_comp,
+                                   file_name=fname, mime="text/csv", key="dl_complaints")
 
             st.markdown("<br>", unsafe_allow_html=True)
 
             if filtered_df.empty:
                 st.info(f"No complaints in '{selected_filter}' category.")
             else:
-                # Show each complaint with delete option
+                # Sort newest first
+                if "Date" in filtered_df.columns:
+                    filtered_df = filtered_df.sort_values("Date", ascending=False)
+
                 for ci2, (_, crow) in enumerate(filtered_df.iterrows()):
-                    cat_icon = CATEGORY_ICONS.get(str(crow.get("Category","")), "📝")
-                    date_str = str(crow.get("Date",""))[:16]
-                    cat_str  = str(crow.get("Category",""))
-                    comp_str = str(crow.get("Complaint",""))
+                    cat_icon  = CATEGORY_ICONS.get(str(crow.get("Category","")), "📝")
+                    date_str  = str(crow.get("Date",""))[:16]
+                    cat_str   = str(crow.get("Category",""))
+                    comp_str  = str(crow.get("Complaint",""))
+                    reg_str   = str(crow.get("RegNo","—"))
+                    name_str  = str(crow.get("Name","—"))
+                    room_str  = str(crow.get("RoomNo","—"))
+                    phone_str = str(crow.get("Phone","—"))
 
                     col_card, col_del = st.columns([11, 1])
                     with col_card:
                         st.markdown(f"""
 <div style="background:var(--bg1);border:1px solid var(--border);border-left:4px solid #d97706;
   border-radius:12px;padding:14px 18px;margin-bottom:8px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
     <div style="display:flex;align-items:center;gap:8px;">
       <span style="font-size:1.2rem;">{cat_icon}</span>
-      <span style="font-family:Inter,sans-serif;font-size:0.8rem;font-weight:700;
+      <span style="font-family:Inter,sans-serif;font-size:0.82rem;font-weight:700;
         color:#f59e0b;letter-spacing:0.04em;">{cat_str}</span>
     </div>
     <span style="font-size:0.68rem;color:var(--text3);">{date_str}</span>
+  </div>
+  <div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:10px;
+    padding-bottom:10px;border-bottom:1px solid var(--border2);">
+    <span style="font-size:0.72rem;color:var(--text3);">
+      Reg: <strong style="color:var(--text2);">{reg_str}</strong></span>
+    <span style="font-size:0.72rem;color:var(--text3);">
+      Name: <strong style="color:var(--text2);">{name_str}</strong></span>
+    <span style="font-size:0.72rem;color:var(--text3);">
+      Room: <strong style="color:var(--text2);">{room_str}</strong></span>
+    <span style="font-size:0.72rem;color:var(--text3);">
+      Phone: <strong style="color:var(--text2);">{phone_str}</strong></span>
   </div>
   <div style="font-size:0.85rem;color:var(--text1);line-height:1.5;">{comp_str}</div>
 </div>
@@ -1580,7 +1676,6 @@ elif role == "Hall Admin":
                     with col_del:
                         st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
                         if st.button("✕", key=f"del_comp_{ci2}_{cat_str}", help="Delete this complaint"):
-                            # Find and remove this complaint from the full df
                             mask = ~(
                                 (complaints_df["Date"]      == crow.get("Date","")) &
                                 (complaints_df["Category"]  == crow.get("Category","")) &
@@ -1589,8 +1684,9 @@ elif role == "Hall Admin":
                             updated_complaints = complaints_df[mask].copy()
                             ws_c = find_or_create_worksheet(comp_sheet)
                             ws_c.clear()
+                            empty_cols = ["Date","Hall","Category","RegNo","Name","RoomNo","Phone","Complaint","Status"]
                             if updated_complaints.empty:
-                                ws_c.update([["Date","Hall","Category","Room","Complaint","Status"]])
+                                ws_c.update([empty_cols])
                             else:
                                 dfc = clean_for_sheets(updated_complaints)
                                 ws_c.update([dfc.columns.values.tolist()] + dfc.values.tolist())
@@ -1855,6 +1951,198 @@ elif role == "Senior Warden":
         st.dataframe(apdf, use_container_width=True, hide_index=True)
     else:
         st.info("No payment data available yet.")
+
+    # ══════════════════════════════════════════════════════════════
+    # SENIOR WARDEN — COMPLAINTS OVERVIEW
+    # ══════════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.markdown("""
+<div style="background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.4);
+  border-left:4px solid #d97706;border-radius:14px;padding:18px 22px;margin:1.5rem 0 1rem;">
+  <div style="font-family:Orbitron,sans-serif;font-size:0.9rem;font-weight:700;
+    color:#f59e0b;letter-spacing:0.05em;">📢 COMPLAINTS OVERVIEW — ALL HALLS</div>
+  <div style="font-size:0.72rem;color:var(--text3);margin-top:4px;">
+    Combined view of all student complaints across all halls, sorted by category.
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    W_COMPLAINT_CATEGORIES = ["Food Quality", "Fan", "Water Cooler", "Cleanliness", "Electricity", "Other"]
+    W_CATEGORY_ICONS = {
+        "Food Quality": "🍽️", "Fan": "🌀", "Water Cooler": "💧",
+        "Cleanliness": "🧹", "Electricity": "💡", "Other": "📝"
+    }
+
+    # Load all hall complaints
+    all_complaints_rows = []
+    for wh in halls:
+        wh_key = find_sheet_key(all_data, f"{wh}_Complaints")
+        if wh_key and not all_data.get(wh_key, pd.DataFrame()).empty:
+            wh_df = all_data[wh_key].copy()
+            if not wh_df.empty:
+                all_complaints_rows.append(wh_df)
+
+    if all_complaints_rows:
+        all_comp_df = pd.concat(all_complaints_rows, ignore_index=True)
+    else:
+        all_comp_df = pd.DataFrame(columns=[
+            "Date","Hall","Category","RegNo","Name","RoomNo","Phone","Complaint","Status"
+        ])
+
+    total_all_comp = len(all_comp_df)
+
+    # ── Combined summary cards ────────────────────────────────────
+    section_label(f"Combined Summary — {total_all_comp} Total Complaints")
+
+    # Category summary row
+    wcat_cols = st.columns(len(W_COMPLAINT_CATEGORIES))
+    for wci, wcat in enumerate(W_COMPLAINT_CATEGORIES):
+        wcount = len(all_comp_df[all_comp_df["Category"] == wcat]) if (not all_comp_df.empty and "Category" in all_comp_df.columns) else 0
+        wicon  = W_CATEGORY_ICONS.get(wcat, "📝")
+        with wcat_cols[wci]:
+            st.markdown(f"""
+<div style="background:var(--bg1);border:1px solid var(--border);border-radius:10px;
+  padding:14px 8px;text-align:center;">
+  <div style="font-size:1.5rem;">{wicon}</div>
+  <div style="font-size:1.2rem;font-weight:800;color:var(--text1);">{wcount}</div>
+  <div style="font-size:0.58rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;">{wcat}</div>
+</div>
+""", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Hall-wise complaint count table
+    if not all_comp_df.empty:
+        hall_comp_summary = []
+        for wh in halls:
+            if "Hall" in all_comp_df.columns:
+                hdf = all_comp_df[all_comp_df["Hall"] == wh]
+            else:
+                hdf = pd.DataFrame()
+            row = {"Hall": wh, "Total": len(hdf)}
+            for wcat in W_COMPLAINT_CATEGORIES:
+                row[wcat] = len(hdf[hdf["Category"] == wcat]) if (not hdf.empty and "Category" in hdf.columns) else 0
+            hall_comp_summary.append(row)
+        hcs_df = pd.DataFrame(hall_comp_summary)
+        st.dataframe(hcs_df, use_container_width=True, hide_index=True)
+
+        # Download all complaints
+        st.markdown("<br>", unsafe_allow_html=True)
+        csv_all_comp = all_comp_df.to_csv(index=False).encode("utf-8")
+        st.download_button("⬇ Download All Complaints (CSV)", csv_all_comp,
+                           file_name="all_halls_complaints.csv", mime="text/csv",
+                           key="dl_all_complaints")
+
+        # ── Category-wise detailed view ───────────────────────────
+        st.markdown("<br>", unsafe_allow_html=True)
+        section_label("Category-wise Complaints (All Halls)")
+
+        for wcat in W_COMPLAINT_CATEGORIES:
+            wicon = W_CATEGORY_ICONS.get(wcat, "📝")
+            cat_df = all_comp_df[all_comp_df["Category"] == wcat] if "Category" in all_comp_df.columns else pd.DataFrame()
+            cat_count = len(cat_df)
+
+            with st.expander(f"{wicon} {wcat} — {cat_count} complaint(s)"):
+                if cat_df.empty:
+                    st.info(f"No complaints in this category.")
+                else:
+                    if "Date" in cat_df.columns:
+                        cat_df = cat_df.sort_values("Date", ascending=False)
+                    for wci2, (_, wrow) in enumerate(cat_df.iterrows()):
+                        date_str  = str(wrow.get("Date",""))[:16]
+                        hall_str  = str(wrow.get("Hall","—"))
+                        reg_str   = str(wrow.get("RegNo","—"))
+                        name_str  = str(wrow.get("Name","—"))
+                        room_str  = str(wrow.get("RoomNo","—"))
+                        phone_str = str(wrow.get("Phone","—"))
+                        comp_str  = str(wrow.get("Complaint",""))
+                        st.markdown(f"""
+<div style="background:var(--bg1);border:1px solid var(--border);border-left:4px solid #d97706;
+  border-radius:12px;padding:14px 18px;margin-bottom:8px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <span style="font-size:0.82rem;font-weight:700;color:#f59e0b;">{hall_str}</span>
+    <span style="font-size:0.68rem;color:var(--text3);">{date_str}</span>
+  </div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px;
+    padding-bottom:8px;border-bottom:1px solid var(--border2);">
+    <span style="font-size:0.7rem;color:var(--text3);">Reg: <strong style="color:var(--text2);">{reg_str}</strong></span>
+    <span style="font-size:0.7rem;color:var(--text3);">Name: <strong style="color:var(--text2);">{name_str}</strong></span>
+    <span style="font-size:0.7rem;color:var(--text3);">Room: <strong style="color:var(--text2);">{room_str}</strong></span>
+    <span style="font-size:0.7rem;color:var(--text3);">Phone: <strong style="color:var(--text2);">{phone_str}</strong></span>
+  </div>
+  <div style="font-size:0.84rem;color:var(--text1);line-height:1.5;">{comp_str}</div>
+</div>
+""", unsafe_allow_html=True)
+
+        # ── Per-Hall view ─────────────────────────────────────────
+        st.markdown("<br>", unsafe_allow_html=True)
+        section_label("Hall-wise Complaints (Individual)")
+
+        sel_hall_comp = st.selectbox("Select Hall", halls, key="warden_hall_comp_select")
+        hall_comp_df  = all_comp_df[all_comp_df["Hall"] == sel_hall_comp] if "Hall" in all_comp_df.columns else pd.DataFrame()
+
+        if hall_comp_df.empty:
+            st.info(f"No complaints from {sel_hall_comp}.")
+        else:
+            # Category filter
+            hc_filter_opts = ["All Categories"] + W_COMPLAINT_CATEGORIES
+            hc_filter = st.selectbox("Filter by Category", hc_filter_opts, key="warden_hc_filter")
+            hc_df = hall_comp_df.copy()
+            if hc_filter != "All Categories":
+                hc_df = hc_df[hc_df["Category"] == hc_filter]
+
+            # Category mini-cards for selected hall
+            wh_cat_cols = st.columns(len(W_COMPLAINT_CATEGORIES))
+            for wi2, wcat2 in enumerate(W_COMPLAINT_CATEGORIES):
+                wc2 = len(hall_comp_df[hall_comp_df["Category"] == wcat2]) if "Category" in hall_comp_df.columns else 0
+                with wh_cat_cols[wi2]:
+                    st.markdown(f"""
+<div style="background:var(--bg1);border:1px solid var(--border);border-radius:8px;
+  padding:8px 6px;text-align:center;">
+  <div style="font-size:1.1rem;">{W_CATEGORY_ICONS.get(wcat2,"📝")}</div>
+  <div style="font-size:1rem;font-weight:800;color:var(--text1);">{wc2}</div>
+  <div style="font-size:0.55rem;color:var(--text3);text-transform:uppercase;">{wcat2}</div>
+</div>
+""", unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # Download per hall
+            csv_hc = hc_df.to_csv(index=False).encode("utf-8")
+            st.download_button(f"⬇ Download {sel_hall_comp} Complaints", csv_hc,
+                               file_name=f"{sel_hall_comp.replace(' ','_')}_complaints.csv",
+                               mime="text/csv", key="dl_hall_comp")
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            if hc_df.empty:
+                st.info(f"No complaints in '{hc_filter}' for {sel_hall_comp}.")
+            else:
+                if "Date" in hc_df.columns:
+                    hc_df = hc_df.sort_values("Date", ascending=False)
+                for hci, (_, hrow) in enumerate(hc_df.iterrows()):
+                    hcat_icon = W_CATEGORY_ICONS.get(str(hrow.get("Category","")), "📝")
+                    st.markdown(f"""
+<div style="background:var(--bg1);border:1px solid var(--border);border-left:4px solid #d97706;
+  border-radius:12px;padding:14px 18px;margin-bottom:8px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:1.1rem;">{hcat_icon}</span>
+      <span style="font-size:0.8rem;font-weight:700;color:#f59e0b;">{str(hrow.get("Category",""))}</span>
+    </div>
+    <span style="font-size:0.68rem;color:var(--text3);">{str(hrow.get("Date",""))[:16]}</span>
+  </div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px;
+    padding-bottom:8px;border-bottom:1px solid var(--border2);">
+    <span style="font-size:0.7rem;color:var(--text3);">Reg: <strong style="color:var(--text2);">{str(hrow.get("RegNo","—"))}</strong></span>
+    <span style="font-size:0.7rem;color:var(--text3);">Name: <strong style="color:var(--text2);">{str(hrow.get("Name","—"))}</strong></span>
+    <span style="font-size:0.7rem;color:var(--text3);">Room: <strong style="color:var(--text2);">{str(hrow.get("RoomNo","—"))}</strong></span>
+    <span style="font-size:0.7rem;color:var(--text3);">Phone: <strong style="color:var(--text2);">{str(hrow.get("Phone","—"))}</strong></span>
+  </div>
+  <div style="font-size:0.84rem;color:var(--text1);line-height:1.5;">{str(hrow.get("Complaint",""))}</div>
+</div>
+""", unsafe_allow_html=True)
+    else:
+        st.info("No complaints submitted from any hall yet.")
 
 
 # ══════════════════════════════════════════════════════════════════
