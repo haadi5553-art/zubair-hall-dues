@@ -805,11 +805,148 @@ if role == "Student":
 
     page_header(f"{hall}", "STUDENT PORTAL · VIEW DUES & SUBMIT RECEIPTS")
 
+    # ── Show/hide complaint box state ────────────────────────────
+    if "show_complaint_box" not in st.session_state:
+        st.session_state["show_complaint_box"] = False
+    if "complaint_submitted_flag" not in st.session_state:
+        st.session_state["complaint_submitted_flag"] = False
+
     # ── Quick Complaint Button (top, always visible) ─────────────
     _cb1, _cb2, _cb3 = st.columns([3, 2, 3])
     with _cb2:
         if st.button("📢 COMPLAINT BOX", key="top_complaint_btn", use_container_width=True):
-            st.session_state["show_complaint_box"] = True
+            st.session_state["show_complaint_box"] = not st.session_state.get("show_complaint_box", False)
+            st.session_state["complaint_submitted_flag"] = False
+            st.rerun()
+
+    # ── Inline Complaint Panel (opens right here at top) ─────────
+    if st.session_state.get("show_complaint_box", False):
+        complaint_categories = {
+            "🍽️ Mess Food Quality": "Food Quality",
+            "🌀 Fan / Ventilation": "Fan",
+            "💧 Water Cooler": "Water Cooler",
+            "🧹 Cleanliness": "Cleanliness",
+            "💡 Electricity / Lights": "Electricity",
+            "📝 Other": "Other",
+        }
+
+        st.markdown("""
+<div style="background:rgba(217,119,6,0.07);border:2px solid rgba(217,119,6,0.45);
+  border-radius:16px;padding:20px 24px;margin:10px 0 18px 0;">
+  <div style="font-family:Orbitron,sans-serif;font-size:0.9rem;font-weight:700;
+    color:#f59e0b;letter-spacing:0.05em;margin-bottom:4px;">📢 COMPLAINT BOX</div>
+  <div style="font-size:0.72rem;color:var(--text3);">Fill in your details and submit your complaint directly to Hall Admin.</div>
+</div>
+""", unsafe_allow_html=True)
+
+        if st.session_state.get("complaint_submitted_flag", False):
+            # Show success state with close button
+            st.markdown("""
+<div style="background:rgba(5,150,105,0.13);border:2px solid rgba(5,150,105,0.55);
+  border-radius:14px;padding:28px 24px;margin:8px 0 12px 0;text-align:center;">
+  <div style="font-size:2.5rem;margin-bottom:10px;">✅</div>
+  <div style="font-family:Inter,sans-serif;font-size:1.05rem;font-weight:800;
+    color:#059669;margin-bottom:6px;">Complaint Submitted!</div>
+  <div style="font-size:0.78rem;color:#64748b;">
+    Your complaint has been sent to the Hall Admin. Press × to close.
+  </div>
+</div>
+""", unsafe_allow_html=True)
+            _xs1, _xs2, _xs3 = st.columns([3, 2, 3])
+            with _xs2:
+                if st.button("✕ Close", key="close_after_submit_btn", use_container_width=True):
+                    st.session_state["show_complaint_box"] = False
+                    st.session_state["complaint_submitted_flag"] = False
+                    st.rerun()
+        else:
+            section_label("Your Details (Required)")
+            ci1, ci2 = st.columns(2)
+            with ci1:
+                c_reg_no  = st.text_input("Registration No *", placeholder="e.g. 2021-CYS-090", key="cp_reg_no")
+                c_name    = st.text_input("Full Name *", placeholder="e.g. Abdul Hadi", key="cp_name")
+            with ci2:
+                c_room_no = st.text_input("Room No *", placeholder="e.g. 12A", key="cp_room_no")
+                c_phone   = st.text_input("Phone No *", placeholder="e.g. 03001234567", key="cp_phone")
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            section_label("Complaint Details")
+
+            selected_cat_label = st.selectbox(
+                "Complaint Category",
+                list(complaint_categories.keys()),
+                key="cp_complaint_cat"
+            )
+            selected_cat = complaint_categories[selected_cat_label]
+
+            complaint_text = st.text_area(
+                "Describe your complaint (max 50 words)",
+                placeholder="Write your complaint here...",
+                key="cp_complaint_text",
+                height=100
+            )
+
+            word_count = len(complaint_text.strip().split()) if complaint_text.strip() else 0
+            if word_count > 0:
+                color = "#dc2626" if word_count > 50 else "#059669"
+                st.markdown(f'<div style="font-size:0.7rem;color:{color};margin-top:-8px;">{word_count}/50 words</div>', unsafe_allow_html=True)
+
+            btn_c1, btn_c2, btn_c3, btn_c4 = st.columns([3, 2, 2, 1])
+            with btn_c2:
+                submit_comp = st.button("📤 Submit", key="cp_submit_complaint_btn", use_container_width=True)
+            with btn_c3:
+                if st.button("✕ Close", key="cp_close_complaint_btn", use_container_width=True):
+                    st.session_state["show_complaint_box"] = False
+                    st.rerun()
+
+            if submit_comp:
+                missing = []
+                if not c_reg_no.strip():    missing.append("Registration No")
+                if not c_name.strip():      missing.append("Full Name")
+                if not c_room_no.strip():   missing.append("Room No")
+                if not c_phone.strip():     missing.append("Phone No")
+                if not complaint_text.strip(): missing.append("Complaint text")
+
+                if missing:
+                    st.error(f"⚠ Please fill in: {', '.join(missing)}")
+                elif word_count > 50:
+                    st.error(f"⚠ Complaint exceeds 50 words ({word_count} words). Please shorten it.")
+                else:
+                    try:
+                        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        complaint_sheet_name = f"{hall}_Complaints"
+
+                        fresh_all = load_all_sheets_data()
+                        comp_key  = find_sheet_key(fresh_all, complaint_sheet_name)
+                        if comp_key and not fresh_all[comp_key].empty:
+                            existing_complaints = fresh_all[comp_key].copy()
+                        else:
+                            existing_complaints = pd.DataFrame(columns=[
+                                "Date","Hall","Category","RegNo","Name","RoomNo","Phone","Complaint","Status"
+                            ])
+
+                        new_complaint = pd.DataFrame([{
+                            "Date": now_str,
+                            "Hall": hall,
+                            "Category": selected_cat,
+                            "RegNo": c_reg_no.strip(),
+                            "Name": c_name.strip(),
+                            "RoomNo": c_room_no.strip(),
+                            "Phone": c_phone.strip(),
+                            "Complaint": complaint_text.strip(),
+                            "Status": "New"
+                        }])
+                        all_complaints = pd.concat([existing_complaints, new_complaint], ignore_index=True)
+
+                        ws = find_or_create_worksheet(complaint_sheet_name)
+                        ws.clear()
+                        df_c = clean_for_sheets(all_complaints)
+                        ws.update([df_c.columns.values.tolist()] + df_c.values.tolist())
+                        invalidate_cache()
+
+                        st.session_state["complaint_submitted_flag"] = True
+                        st.rerun()
+                    except Exception as _ce:
+                        st.error(f"Failed to submit complaint: {_ce}")
 
     if dues.empty:
         st.warning("⚠ No dues have been uploaded for this hall yet.")
@@ -951,159 +1088,7 @@ if role == "Student":
                     for e in errors:
                         st.error(e)
 
-    # ── Complaint Box ────────────────────────────────────────────
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div id="complaint-box-anchor"></div>', unsafe_allow_html=True)
 
-    # Show/hide toggle
-    if "show_complaint_box" not in st.session_state:
-        st.session_state["show_complaint_box"] = False
-
-    # Orange banner button to open complaint box
-    if not st.session_state["show_complaint_box"]:
-        st.markdown("""
-<div style="background:rgba(217,119,6,0.1);border:1px solid rgba(217,119,6,0.4);
-  border-radius:14px;padding:16px 22px;cursor:pointer;text-align:center;">
-  <span style="font-family:Orbitron,sans-serif;font-size:0.85rem;font-weight:700;
-    color:#f59e0b;letter-spacing:0.05em;">📢 COMPLAINT BOX — Click to Open</span>
-  <div style="font-size:0.7rem;color:var(--text3);margin-top:4px;">
-    Submit a complaint about mess, cleanliness, electricity, water, or fans
-  </div>
-</div>
-""", unsafe_allow_html=True)
-        _oc1, _oc2, _oc3 = st.columns([3,2,3])
-        with _oc2:
-            if st.button("📢 Open Complaint Box", key="open_complaint_btn", use_container_width=True):
-                st.session_state["show_complaint_box"] = True
-                st.rerun()
-    else:
-        st.markdown("""
-<div style="background:rgba(217,119,6,0.1);border:2px solid rgba(217,119,6,0.5);
-  border-radius:14px;padding:18px 22px;margin-bottom:1rem;">
-  <div style="font-family:Orbitron,sans-serif;font-size:0.9rem;font-weight:700;
-    color:#f59e0b;letter-spacing:0.05em;margin-bottom:4px;">📢 COMPLAINT BOX</div>
-  <div style="font-size:0.72rem;color:var(--text3);">Fill in your details and describe your complaint. It will go directly to Hall Admin.</div>
-</div>
-""", unsafe_allow_html=True)
-
-        complaint_categories = {
-            "🍽️ Mess Food Quality": "Food Quality",
-            "🌀 Fan / Ventilation": "Fan",
-            "💧 Water Cooler": "Water Cooler",
-            "🧹 Cleanliness": "Cleanliness",
-            "💡 Electricity / Lights": "Electricity",
-            "📝 Other": "Other",
-        }
-
-        # Student identity fields
-        section_label("Your Details (Required)")
-        ci1, ci2 = st.columns(2)
-        with ci1:
-            c_reg_no   = st.text_input("Registration No *", placeholder="e.g. 2021-CYS-090", key="c_reg_no")
-            c_name     = st.text_input("Full Name *", placeholder="e.g. Abdul Hadi", key="c_name")
-        with ci2:
-            c_room_no  = st.text_input("Room No *", placeholder="e.g. 12A", key="c_room_no")
-            c_phone    = st.text_input("Phone No *", placeholder="e.g. 03001234567", key="c_phone")
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        section_label("Complaint Details")
-
-        selected_cat_label = st.selectbox(
-            "Complaint Category",
-            list(complaint_categories.keys()),
-            key="complaint_cat"
-        )
-        selected_cat = complaint_categories[selected_cat_label]
-
-        complaint_text = st.text_area(
-            "Describe your complaint (max 50 words)",
-            placeholder="Write your complaint here...",
-            key="complaint_text",
-            height=100
-        )
-
-        word_count = len(complaint_text.strip().split()) if complaint_text.strip() else 0
-        if word_count > 0:
-            color = "#dc2626" if word_count > 50 else "#059669"
-            st.markdown(f'<div style="font-size:0.7rem;color:{color};margin-top:-8px;">{word_count}/50 words</div>', unsafe_allow_html=True)
-
-        complaint_submitted_key = "complaint_submitted_flag"
-
-        if st.session_state.get(complaint_submitted_key, False):
-            st.markdown("""
-<div style="background:rgba(5,150,105,0.12);border:1px solid rgba(5,150,105,0.5);
-  border-radius:10px;padding:14px 18px;margin:10px 0;
-  display:flex;align-items:center;gap:12px;">
-  <div style="font-size:1.5rem;">✅</div>
-  <div>
-    <div style="font-family:Inter,sans-serif;font-size:0.9rem;font-weight:700;color:#059669;">Complaint Submitted</div>
-    <div style="font-size:0.72rem;color:#64748b;margin-top:2px;">Your complaint has been sent to the Hall Admin.</div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
-            st.session_state["complaint_submitted_flag"] = False
-
-        _sc1, _sc2, _sc3 = st.columns([2,1,2])
-        with _sc2:
-            submit_comp = st.button("📤 Submit Complaint", key="submit_complaint_btn", use_container_width=True)
-
-        if submit_comp:
-            missing = []
-            if not c_reg_no.strip():  missing.append("Registration No")
-            if not c_name.strip():    missing.append("Full Name")
-            if not c_room_no.strip(): missing.append("Room No")
-            if not c_phone.strip():   missing.append("Phone No")
-            if not complaint_text.strip(): missing.append("Complaint text")
-
-            if missing:
-                st.error(f"⚠ Please fill in: {', '.join(missing)}")
-            elif word_count > 50:
-                st.error(f"⚠ Complaint exceeds 50 words ({word_count} words). Please shorten it.")
-            else:
-                try:
-                    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    complaint_sheet_name = f"{hall}_Complaints"
-
-                    fresh_all = load_all_sheets_data()
-                    comp_key  = find_sheet_key(fresh_all, complaint_sheet_name)
-                    if comp_key and not fresh_all[comp_key].empty:
-                        existing_complaints = fresh_all[comp_key].copy()
-                    else:
-                        existing_complaints = pd.DataFrame(columns=[
-                            "Date","Hall","Category","RegNo","Name","RoomNo","Phone","Complaint","Status"
-                        ])
-
-                    new_complaint = pd.DataFrame([{
-                        "Date": now_str,
-                        "Hall": hall,
-                        "Category": selected_cat,
-                        "RegNo": c_reg_no.strip(),
-                        "Name": c_name.strip(),
-                        "RoomNo": c_room_no.strip(),
-                        "Phone": c_phone.strip(),
-                        "Complaint": complaint_text.strip(),
-                        "Status": "New"
-                    }])
-                    all_complaints = pd.concat([existing_complaints, new_complaint], ignore_index=True)
-
-                    ws = find_or_create_worksheet(complaint_sheet_name)
-                    ws.clear()
-                    df_c = clean_for_sheets(all_complaints)
-                    ws.update([df_c.columns.values.tolist()] + df_c.values.tolist())
-                    invalidate_cache()
-
-                    st.session_state[complaint_submitted_key] = True
-                    st.success("✓ Complaint submitted successfully!")
-                    st.rerun()
-                except Exception as _ce:
-                    st.error(f"Failed to submit complaint: {_ce}")
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        _cl1, _cl2, _cl3 = st.columns([3,2,3])
-        with _cl2:
-            if st.button("✕ Close Complaint Box", key="close_complaint_btn", use_container_width=True):
-                st.session_state["show_complaint_box"] = False
-                st.rerun()
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -2119,9 +2104,19 @@ elif role == "Senior Warden":
             else:
                 if "Date" in hc_df.columns:
                     hc_df = hc_df.sort_values("Date", ascending=False)
+                # Load full complaints df for this hall for deletion
+                wh_comp_sheet = f"{sel_hall_comp}_Complaints"
+                wh_comp_key   = find_sheet_key(all_data, wh_comp_sheet)
+                if wh_comp_key and not all_data.get(wh_comp_key, pd.DataFrame()).empty:
+                    wh_full_comp_df = all_data[wh_comp_key].copy()
+                else:
+                    wh_full_comp_df = pd.DataFrame(columns=["Date","Hall","Category","RegNo","Name","RoomNo","Phone","Complaint","Status"])
+
                 for hci, (_, hrow) in enumerate(hc_df.iterrows()):
                     hcat_icon = W_CATEGORY_ICONS.get(str(hrow.get("Category","")), "📝")
-                    st.markdown(f"""
+                    hcol_card, hcol_del = st.columns([11, 1])
+                    with hcol_card:
+                        st.markdown(f"""
 <div style="background:var(--bg1);border:1px solid var(--border);border-left:4px solid #d97706;
   border-radius:12px;padding:14px 18px;margin-bottom:8px;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -2141,6 +2136,26 @@ elif role == "Senior Warden":
   <div style="font-size:0.84rem;color:var(--text1);line-height:1.5;">{str(hrow.get("Complaint",""))}</div>
 </div>
 """, unsafe_allow_html=True)
+                    with hcol_del:
+                        st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
+                        if st.button("✕", key=f"warden_del_comp_{hci}_{sel_hall_comp}", help="Delete this complaint"):
+                            w_mask = ~(
+                                (wh_full_comp_df["Date"]      == hrow.get("Date","")) &
+                                (wh_full_comp_df["Category"]  == hrow.get("Category","")) &
+                                (wh_full_comp_df["Complaint"] == hrow.get("Complaint",""))
+                            )
+                            updated_wh_comp = wh_full_comp_df[w_mask].copy()
+                            ws_wc = find_or_create_worksheet(wh_comp_sheet)
+                            ws_wc.clear()
+                            empty_cols_w = ["Date","Hall","Category","RegNo","Name","RoomNo","Phone","Complaint","Status"]
+                            if updated_wh_comp.empty:
+                                ws_wc.update([empty_cols_w])
+                            else:
+                                dfw = clean_for_sheets(updated_wh_comp)
+                                ws_wc.update([dfw.columns.values.tolist()] + dfw.values.tolist())
+                            invalidate_cache()
+                            st.success("Complaint deleted.")
+                            st.rerun()
     else:
         st.info("No complaints submitted from any hall yet.")
 
