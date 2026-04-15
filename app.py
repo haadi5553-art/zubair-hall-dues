@@ -855,157 +855,51 @@ if role == "Student":
 
         with st.expander(f"⬡ Submit Receipt — Room {room} · {name}"):
             uploaded_files = st.file_uploader(
-                "Upload receipt image(s) — Amount will be auto-detected",
+                "Upload receipt image(s)",
                 accept_multiple_files=True,
                 type=["png","jpg","jpeg","webp"],
                 key=f"files_{room}_{idx}"
             )
 
-            # ── AI Amount Extraction ─────────────────────────────
-            ai_extract_key = f"ai_amt_{room}_{idx}"
-            ai_done_key    = f"ai_done_{room}_{idx}"
+            # ── Manual Amount Input ──────────────────────────────
+            amount_paid_input = st.number_input(
+                f"Amount Paid (Rs) — Total Due: Rs {int(total):,}",
+                min_value=0,
+                max_value=int(total) * 10,
+                value=0,
+                step=10,
+                key=f"amt_input_{room}_{idx}"
+            )
 
-            if uploaded_files:
-                # Auto-extract on first upload (only once per file set)
-                file_hashes_now = [hashlib.md5(f.getvalue()).hexdigest() for f in uploaded_files]
-                prev_hashes_key = f"prev_hashes_{room}_{idx}"
+            if amount_paid_input > int(total):
+                st.warning(f"⚠ Entered amount Rs {amount_paid_input:,} exceeds total due Rs {int(total):,}. It will be capped.")
+                amount_paid_input = int(total)
 
-                if st.session_state.get(prev_hashes_key) != file_hashes_now:
-                    st.session_state[prev_hashes_key] = file_hashes_now
-                    st.session_state[ai_done_key] = False
+            if 0 < amount_paid_input < int(total):
+                rem_after = int(total) - amount_paid_input
+                st.info(f"Partial payment. Remaining after this: Rs {rem_after:,}")
 
-                if not st.session_state.get(ai_done_key, False):
-                    with st.spinner("🔍 Scanning receipt for amount..."):
-                        try:
-                            import base64, requests as _req, re as _re
+            submitted_key = f"submitted_{room}_{idx}"
 
-                            # ── Get API key from secrets ──────────────────────
-                            try:
-                                _api_key = st.secrets["ANTHROPIC_API_KEY"]
-                            except Exception:
-                                try:
-                                    _api_key = st.secrets["anthropic"]["api_key"]
-                                except Exception:
-                                    _api_key = None
-
-                            total_extracted = 0
-                            ai_success = False
-
-                            if _api_key:
-                                for f in uploaded_files:
-                                    img_bytes  = f.getvalue()
-                                    b64_img    = base64.b64encode(img_bytes).decode("utf-8")
-                                    ext        = f.name.lower().split(".")[-1]
-                                    media_type = "image/jpeg" if ext in ["jpg","jpeg"] else f"image/{ext}"
-
-                                    payload = {
-                                        "model": "claude-opus-4-5",
-                                        "max_tokens": 100,
-                                        "messages": [{
-                                            "role": "user",
-                                            "content": [
-                                                {
-                                                    "type": "image",
-                                                    "source": {
-                                                        "type": "base64",
-                                                        "media_type": media_type,
-                                                        "data": b64_img
-                                                    }
-                                                },
-                                                {
-                                                    "type": "text",
-                                                    "text": (
-                                                        "This is a payment receipt. "
-                                                        "Look for the TOTAL AMOUNT PAID on this receipt. "
-                                                        "Reply with ONLY a single integer number — no text, no Rs, no commas. "
-                                                        "Example reply: 4500"
-                                                    )
-                                                }
-                                            ]
-                                        }]
-                                    }
-
-                                    resp = _req.post(
-                                        "https://api.anthropic.com/v1/messages",
-                                        headers={
-                                            "Content-Type": "application/json",
-                                            "x-api-key": _api_key,
-                                            "anthropic-version": "2023-06-01"
-                                        },
-                                        json=payload,
-                                        timeout=30
-                                    )
-                                    if resp.status_code == 200:
-                                        raw = resp.json()["content"][0]["text"].strip()
-                                        nums = _re.findall(r'\d[\d,]*', raw)
-                                        if nums:
-                                            val = int(nums[0].replace(",", ""))
-                                            total_extracted += val
-                                            ai_success = True
-
-                            if ai_success and total_extracted > 0:
-                                # ── IMPORTANT: do NOT cap or override with total ──
-                                # Store exactly what AI detected
-                                st.session_state[ai_extract_key] = total_extracted
-                                st.session_state["ai_success_" + ai_done_key] = True
-                            else:
-                                # AI failed or no key — store None so user must enter manually
-                                st.session_state[ai_extract_key] = None
-                                st.session_state["ai_success_" + ai_done_key] = False
-                            st.session_state[ai_done_key] = True
-
-                        except Exception as _e:
-                            st.session_state[ai_extract_key] = None
-                            st.session_state["ai_success_" + ai_done_key] = False
-                            st.session_state[ai_done_key] = True
-
-                # ── Show result & let user edit ──────────────────────
-                extracted_amount = st.session_state.get(ai_extract_key, None)
-                ai_worked = st.session_state.get("ai_success_" + ai_done_key, False)
-
-                if ai_worked and extracted_amount is not None:
-                    color = "#059669" if extracted_amount >= int(total) else "#0ea5e9"
-                    st.markdown(f"""
-<div style="background:rgba(5,150,105,0.08);border:1px solid rgba(5,150,105,0.3);
-  border-radius:10px;padding:12px 16px;margin:8px 0;display:flex;
-  justify-content:space-between;align-items:center;">
+            if st.session_state.get(submitted_key, False):
+                st.markdown("""
+<div style="background:rgba(5,150,105,0.12);border:1px solid rgba(5,150,105,0.5);
+  border-radius:10px;padding:14px 18px;margin:10px 0;
+  display:flex;align-items:center;gap:12px;">
+  <div style="font-size:1.5rem;">✅</div>
   <div>
-    <div style="font-family:Inter,sans-serif;font-size:0.65rem;color:#64748b;
-      letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">🤖 AI Detected Amount</div>
-    <div style="font-family:Inter,sans-serif;font-size:1.25rem;font-weight:800;
-      color:{color};font-variant-numeric:tabular-nums;">
-      Rs&nbsp;{extracted_amount:,}
-    </div>
-  </div>
-  <div style="font-size:0.7rem;color:#64748b;text-align:right;">
-    Due: Rs {int(total):,}
+    <div style="font-family:Inter,sans-serif;font-size:0.9rem;font-weight:700;color:#059669;">Submitted</div>
+    <div style="font-size:0.72rem;color:#64748b;margin-top:2px;">Receipt successfully recorded in the system.</div>
   </div>
 </div>
 """, unsafe_allow_html=True)
+
+            if st.button(f"⬆ Submit Receipt — Room {room}", key=f"submit_{room}_{idx}"):
+                if amount_paid_input <= 0:
+                    st.error("⚠ Please enter a valid amount before submitting.")
+                elif not uploaded_files:
+                    st.error("⚠ Please upload at least one receipt image.")
                 else:
-                    st.warning("⚠ Could not auto-detect amount from receipt. Please enter manually below.")
-
-                # ── Always show editable number input ────────────────
-                default_val = extracted_amount if (ai_worked and extracted_amount) else 0
-                amount_paid_input = st.number_input(
-                    "Amount Paid (Rs) — verify or correct if needed",
-                    min_value=0,
-                    max_value=int(total) * 10,   # allow overpay detection
-                    value=int(default_val),
-                    step=10,
-                    key=f"amt_input_{room}_{idx}"
-                )
-
-                # Cap to total and warn
-                if amount_paid_input > int(total):
-                    st.warning(f"⚠ Entered amount Rs {amount_paid_input:,} exceeds total due Rs {int(total):,}. It will be capped.")
-                    amount_paid_input = int(total)
-
-                if 0 < amount_paid_input < int(total):
-                    rem_after = int(total) - amount_paid_input
-                    st.info(f"Partial payment. Remaining after this: Rs {rem_after:,}")
-
-                if st.button(f"⬆ Transmit Receipt — Room {room}", key=f"submit_{room}_{idx}"):
                     invalidate_cache()
                     fresh_all        = load_all_sheets_data()
                     current_payments = get_payments_from_cache(fresh_all, hall)
@@ -1041,18 +935,111 @@ if role == "Student":
 
                     if added:
                         save_payments(current_payments, hall)
+                        st.session_state[submitted_key] = True
                         rem = int(total) - amount_paid_input
                         if rem > 0:
-                            st.success(f"✓ Receipt transmitted. Paid: Rs {amount_paid_input:,} · Remaining: Rs {rem:,}")
+                            st.success(f"✓ Receipt submitted. Paid: Rs {amount_paid_input:,} · Remaining: Rs {rem:,}")
                         else:
-                            st.success(f"✓ Full payment transmitted. Amount: Rs {amount_paid_input:,}")
-                        # Reset AI state for this card
-                        st.session_state.pop(ai_extract_key, None)
-                        st.session_state.pop(ai_done_key, None)
-                        st.session_state.pop(prev_hashes_key, None)
+                            st.success(f"✓ Full payment submitted. Amount: Rs {amount_paid_input:,}")
                         st.rerun()
                     for e in errors:
                         st.error(e)
+
+    # ── Complaint Box ────────────────────────────────────────────
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+<div style="background:var(--bg1);border:1px solid var(--border);border-left:4px solid #d97706;
+  border-radius:14px;padding:18px 22px;margin-top:1rem;">
+  <div style="font-family:Orbitron,sans-serif;font-size:0.85rem;font-weight:700;
+    color:#f59e0b;letter-spacing:0.05em;margin-bottom:4px;">📢 COMPLAINT BOX</div>
+  <div style="font-size:0.72rem;color:var(--text3);">Submit your complaint — it will reach Hall Admin directly.</div>
+</div>
+""", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    complaint_categories = {
+        "🍽️ Mess Food Quality": "Food Quality",
+        "🌀 Fan / Ventilation": "Fan",
+        "💧 Water Cooler": "Water Cooler",
+        "🧹 Cleanliness": "Cleanliness",
+        "💡 Electricity / Lights": "Electricity",
+        "📝 Other": "Other",
+    }
+
+    selected_cat_label = st.selectbox(
+        "Complaint Category",
+        list(complaint_categories.keys()),
+        key="complaint_cat"
+    )
+    selected_cat = complaint_categories[selected_cat_label]
+
+    complaint_text = st.text_area(
+        "Describe your complaint (max 50 words)",
+        placeholder="Write your complaint here...",
+        key="complaint_text",
+        height=100
+    )
+
+    word_count = len(complaint_text.strip().split()) if complaint_text.strip() else 0
+    if word_count > 0:
+        color = "#dc2626" if word_count > 50 else "#059669"
+        st.markdown(f'<div style="font-size:0.7rem;color:{color};margin-top:-8px;">{word_count}/50 words</div>', unsafe_allow_html=True)
+
+    complaint_submitted_key = "complaint_submitted_flag"
+
+    if st.session_state.get(complaint_submitted_key, False):
+        st.markdown("""
+<div style="background:rgba(5,150,105,0.12);border:1px solid rgba(5,150,105,0.5);
+  border-radius:10px;padding:14px 18px;margin:10px 0;
+  display:flex;align-items:center;gap:12px;">
+  <div style="font-size:1.5rem;">✅</div>
+  <div>
+    <div style="font-family:Inter,sans-serif;font-size:0.9rem;font-weight:700;color:#059669;">Complaint Submitted</div>
+    <div style="font-size:0.72rem;color:#64748b;margin-top:2px;">Your complaint has been sent to the Hall Admin.</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    if st.button("📤 Submit Complaint", key="submit_complaint_btn"):
+        if not complaint_text.strip():
+            st.error("⚠ Please write your complaint before submitting.")
+        elif word_count > 50:
+            st.error(f"⚠ Complaint exceeds 50 words ({word_count} words). Please shorten it.")
+        else:
+            # Save complaint to Google Sheets
+            try:
+                now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                complaint_sheet_name = f"{hall}_Complaints"
+
+                # Load existing complaints
+                fresh_all = load_all_sheets_data()
+                comp_key  = find_sheet_key(fresh_all, complaint_sheet_name)
+                if comp_key and not fresh_all[comp_key].empty:
+                    existing_complaints = fresh_all[comp_key].copy()
+                else:
+                    existing_complaints = pd.DataFrame(columns=["Date","Hall","Category","Room","Complaint","Status"])
+
+                new_complaint = pd.DataFrame([{
+                    "Date": now_str,
+                    "Hall": hall,
+                    "Category": selected_cat,
+                    "Room": "General",
+                    "Complaint": complaint_text.strip(),
+                    "Status": "New"
+                }])
+                all_complaints = pd.concat([existing_complaints, new_complaint], ignore_index=True)
+
+                ws = find_or_create_worksheet(complaint_sheet_name)
+                ws.clear()
+                df_c = clean_for_sheets(all_complaints)
+                ws.update([df_c.columns.values.tolist()] + df_c.values.tolist())
+                invalidate_cache()
+
+                st.session_state[complaint_submitted_key] = True
+                st.success("✓ Complaint submitted successfully!")
+                st.rerun()
+            except Exception as _ce:
+                st.error(f"Failed to submit complaint: {_ce}")
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -1072,8 +1059,8 @@ elif role == "Hall Admin":
     dues     = get_dues_from_cache(all_data, hall)
     payments = get_payments_from_cache(all_data, hall)
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "⬆ Upload Dues", "◉ Dashboard", "⚠ Pending", "◎ Receipts", "✕ Manage"
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+        "⬆ Upload Dues", "◉ Dashboard", "⚠ Pending", "◎ Receipts", "✕ Manage", "📢 Complaints"
     ])
 
     # ── Upload Dues ──────────────────────────────────────────────
@@ -1505,6 +1492,111 @@ elif role == "Hall Admin":
                     st.rerun()
             with col2:
                 st.info("Deleting a month will also remove carried arrears from the next month's Previous column.")
+
+    # ── Complaints Tab ───────────────────────────────────────────
+    with tab6:
+        section_label("Student Complaints")
+
+        # Load complaints for this hall
+        fresh_all = load_all_sheets_data()
+        comp_sheet = f"{hall}_Complaints"
+        comp_key   = find_sheet_key(fresh_all, comp_sheet)
+
+        if comp_key and not fresh_all.get(comp_key, pd.DataFrame()).empty:
+            complaints_df = fresh_all[comp_key].copy()
+        else:
+            complaints_df = pd.DataFrame(columns=["Date","Hall","Category","Room","Complaint","Status"])
+
+        COMPLAINT_CATEGORIES = ["Food Quality", "Fan", "Water Cooler", "Cleanliness", "Electricity", "Other"]
+        CATEGORY_ICONS = {
+            "Food Quality": "🍽️", "Fan": "🌀", "Water Cooler": "💧",
+            "Cleanliness": "🧹", "Electricity": "💡", "Other": "📝"
+        }
+
+        if complaints_df.empty:
+            st.info("No complaints submitted yet.")
+        else:
+            # Filter by category
+            filter_options = ["All Categories"] + COMPLAINT_CATEGORIES
+            selected_filter = st.selectbox("Filter by Category", filter_options, key="admin_comp_filter")
+
+            filtered_df = complaints_df.copy()
+            if selected_filter != "All Categories":
+                filtered_df = filtered_df[filtered_df["Category"] == selected_filter]
+
+            # Summary counts
+            st.markdown("<br>", unsafe_allow_html=True)
+            cat_cols = st.columns(len(COMPLAINT_CATEGORIES))
+            for ci, cat in enumerate(COMPLAINT_CATEGORIES):
+                count = len(complaints_df[complaints_df["Category"] == cat]) if "Category" in complaints_df.columns else 0
+                icon  = CATEGORY_ICONS.get(cat, "📝")
+                with cat_cols[ci]:
+                    st.markdown(f"""
+<div style="background:var(--bg1);border:1px solid var(--border);border-radius:10px;
+  padding:12px 10px;text-align:center;cursor:pointer;">
+  <div style="font-size:1.4rem;">{icon}</div>
+  <div style="font-size:1.1rem;font-weight:800;color:var(--text1);">{count}</div>
+  <div style="font-size:0.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;">{cat}</div>
+</div>
+""", unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # Download button
+            csv_comp = filtered_df.to_csv(index=False).encode("utf-8")
+            fname    = f"{hall}_complaints_{selected_filter.replace(' ','_')}.csv"
+            st.download_button(f"⬇ Download {selected_filter} Complaints (CSV)", csv_comp,
+                               file_name=fname, mime="text/csv", key="dl_complaints")
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            if filtered_df.empty:
+                st.info(f"No complaints in '{selected_filter}' category.")
+            else:
+                # Show each complaint with delete option
+                for ci2, (_, crow) in enumerate(filtered_df.iterrows()):
+                    cat_icon = CATEGORY_ICONS.get(str(crow.get("Category","")), "📝")
+                    date_str = str(crow.get("Date",""))[:16]
+                    cat_str  = str(crow.get("Category",""))
+                    comp_str = str(crow.get("Complaint",""))
+
+                    col_card, col_del = st.columns([11, 1])
+                    with col_card:
+                        st.markdown(f"""
+<div style="background:var(--bg1);border:1px solid var(--border);border-left:4px solid #d97706;
+  border-radius:12px;padding:14px 18px;margin-bottom:8px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:1.2rem;">{cat_icon}</span>
+      <span style="font-family:Inter,sans-serif;font-size:0.8rem;font-weight:700;
+        color:#f59e0b;letter-spacing:0.04em;">{cat_str}</span>
+    </div>
+    <span style="font-size:0.68rem;color:var(--text3);">{date_str}</span>
+  </div>
+  <div style="font-size:0.85rem;color:var(--text1);line-height:1.5;">{comp_str}</div>
+</div>
+""", unsafe_allow_html=True)
+
+                    with col_del:
+                        st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
+                        if st.button("✕", key=f"del_comp_{ci2}_{cat_str}", help="Delete this complaint"):
+                            # Find and remove this complaint from the full df
+                            mask = ~(
+                                (complaints_df["Date"]      == crow.get("Date","")) &
+                                (complaints_df["Category"]  == crow.get("Category","")) &
+                                (complaints_df["Complaint"] == crow.get("Complaint",""))
+                            )
+                            updated_complaints = complaints_df[mask].copy()
+                            ws_c = find_or_create_worksheet(comp_sheet)
+                            ws_c.clear()
+                            if updated_complaints.empty:
+                                ws_c.update([["Date","Hall","Category","Room","Complaint","Status"]])
+                            else:
+                                dfc = clean_for_sheets(updated_complaints)
+                                ws_c.update([dfc.columns.values.tolist()] + dfc.values.tolist())
+                            invalidate_cache()
+                            st.success("Complaint deleted.")
+                            st.rerun()
 
 
 # ══════════════════════════════════════════════════════════════════
