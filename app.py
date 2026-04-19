@@ -9,7 +9,7 @@ import numpy as np
 AUTO_REFRESH = False
 
 st.set_page_config(
-    page_title="HOLO-MESS v2.1 | UET",
+    page_title="UET MESS DUES MANAGEMENT",
     layout="wide",
     page_icon="⬡",
     initial_sidebar_state="expanded"
