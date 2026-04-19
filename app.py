@@ -771,8 +771,8 @@ def hall_summary_card(hall_name, total, collected, remaining, pct_int):
 # ══════════════════════════════════════════════════════════════════
 st.sidebar.markdown("""
 <div class="sidebar-logo">
-  <h2>⬡ HOLO-MESS v2.1</h2>
-  <p>● HOLO-SYSTEM ONLINE</p>
+  <h2>⬡ UET MESS DUES MANAGEMENT </h2>
+  <p>● SENIOR WARDEN(BOYS)</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -2172,9 +2172,9 @@ st.markdown("""
   <div>
     <span style="font-family:Orbitron,sans-serif;font-size:0.8rem;font-weight:800;
       color:#60a5fa;
-      text-shadow:0 0 16px rgba(96,165,250,0.7), 0 0 32px rgba(96,165,250,0.3);">HOLO-MESS v2.1</span>
+      text-shadow:0 0 16px rgba(96,165,250,0.7), 0 0 32px rgba(96,165,250,0.3);">SENIOR WARDEN (BOYS)</span>
     <span style="color:var(--border);margin:0 8px;">|</span>
-    <span style="font-size:0.74rem;color:var(--text3);">University Mess Dues System · Powered by Streamlit &amp; Google Sheets</span>
+    <span style="font-size:0.74rem;color:var(--text3);"> UET Mess Dues System · s</span>
   </div>
   <div style="text-align:right;">
     <span style="font-family:Orbitron,sans-serif;font-size:0.76rem;font-weight:800;
